@@ -3,9 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  final ValueChanged<bool>? onToggleTheme;
-
-  const SplashScreen({super.key, this.onToggleTheme});
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -39,8 +37,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) =>
-                HomeScreen(onToggleTheme: widget.onToggleTheme),
+            pageBuilder: (_, __, ___) => const HomeScreen(),
             transitionsBuilder: (_, anim, __, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 500),

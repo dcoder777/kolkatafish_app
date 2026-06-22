@@ -1,28 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class ProfileTab extends StatefulWidget {
-  final ValueChanged<bool>? onToggleTheme;
-
-  const ProfileTab({super.key, this.onToggleTheme});
-
-  @override
-  State<ProfileTab> createState() => _ProfileTabState();
-}
-
-class _ProfileTabState extends State<ProfileTab> {
-  bool _darkMode = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final brightness = Theme.of(context).brightness;
-    if (mounted) {
-      setState(() {
-        _darkMode = brightness == Brightness.dark;
-      });
-    }
-  }
+class ProfileTab extends StatelessWidget {
+  const ProfileTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -90,14 +70,6 @@ class _ProfileTabState extends State<ProfileTab> {
         const SizedBox(height: 12),
         _tile(Icons.notifications_outlined, 'Notifications', trailing: 'On'),
         _tile(Icons.language_outlined, 'Language', trailing: 'English'),
-        _tile(Icons.dark_mode_outlined, 'Dark Mode',
-            trailingWidget: Switch.adaptive(
-              value: _darkMode,
-              onChanged: (value) {
-                setState(() => _darkMode = value);
-                widget.onToggleTheme?.call(value);
-              },
-            )),
         _tile(Icons.location_on_outlined, 'Currency', trailing: 'INR (₹)'),
         const SizedBox(height: 16),
         _sectionTitle('Account'),
@@ -112,12 +84,51 @@ class _ProfileTabState extends State<ProfileTab> {
         _tile(Icons.help_outline, 'Help Center'),
         _tile(Icons.info_outline, 'Privacy Policy'),
         _tile(Icons.description_outlined, 'Terms of Service'),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: OutlinedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.logout, color: Colors.red),
+            label: Text(
+              'Logout',
+              style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w600),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: const BorderSide(color: Colors.red),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: ElevatedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.login),
+            label: Text(
+              'Login',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF55D2C),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 40),
       ],
     );
   }
 
-  Widget _statItem(String value, String label) {
+  static Widget _statItem(String value, String label) {
     return Column(
       children: [
         Text(
@@ -133,7 +144,7 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  Widget _sectionTitle(String title) {
+  static Widget _sectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Text(
@@ -143,7 +154,7 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  Widget _tile(IconData icon, String title, {String? trailing, Widget? trailingWidget}) {
+  static Widget _tile(IconData icon, String title, {String? trailing, Widget? trailingWidget}) {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),

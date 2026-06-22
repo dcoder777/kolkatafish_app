@@ -13,9 +13,7 @@ import 'profile_tab.dart';
 import 'product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final ValueChanged<bool>? onToggleTheme;
-
-  const HomeScreen({super.key, this.onToggleTheme});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -108,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         return const ContactTab();
       case 4:
-        return ProfileTab(onToggleTheme: widget.onToggleTheme);
+        return const ProfileTab();
       default:
         return const SizedBox.shrink();
     }
