@@ -31,101 +31,70 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(context),
-      body: _navIndex == 0 ? _buildHomeContent(context) : _getScreen(),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: const AppLogo(),
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 12),
-          child: ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.phone, size: 16),
-            label: Text(
-              'Call us',
-              style: GoogleFonts.poppins(fontSize: 12),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4CAF50),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      appBar: AppBar(
+        title: const AppLogo(),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.phone, size: 16),
+              label: Text(
+                'Call us',
+                style: GoogleFonts.poppins(fontSize: 12),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4CAF50),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () {},
-        ),
-      ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(48),
-        child: _buildNavLinks(context),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {},
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildNavLinks(BuildContext context) {
-    final links = [
-      _NavItem('Home', Icons.home, 0),
-      _NavItem('About', Icons.info, 1),
-      _NavItem('Our Shop', Icons.shopping_bag, 2),
-      _NavItem('Contact', Icons.mail, 3),
-      _NavItem('My Account', Icons.person, 4),
-      _NavItem('Cart', Icons.shopping_cart, 5),
-    ];
-
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade200),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Row(
-          children: links.map((link) {
-            final isActive = _navIndex == link.index;
-            return InkWell(
-              onTap: () => _onNavTap(link.index),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      link.icon,
-                      size: 18,
-                      color: isActive
-                          ? const Color(0xFFF55D2C)
-                          : Colors.grey.shade700,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      link.name,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w400,
-                        color: isActive
-                            ? const Color(0xFFF55D2C)
-                            : Colors.grey.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+      body: _navIndex == 0 ? _buildHomeContent(context) : _getScreen(),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _navIndex,
+        onDestinationSelected: _onNavTap,
+        animationDuration: const Duration(milliseconds: 300),
+        backgroundColor: Colors.white,
+        elevation: 8,
+        height: 65,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        indicatorColor: const Color(0xFFF55D2C).withValues(alpha: 0.1),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded, color: Color(0xFFF55D2C)),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.info_outline),
+            selectedIcon: Icon(Icons.info_rounded, color: Color(0xFFF55D2C)),
+            label: 'About',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_bag_outlined),
+            selectedIcon: Icon(Icons.shopping_bag_rounded, color: Color(0xFFF55D2C)),
+            label: 'Shop',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.mail_outline),
+            selectedIcon: Icon(Icons.mail_rounded, color: Color(0xFFF55D2C)),
+            label: 'Contact',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person_rounded, color: Color(0xFFF55D2C)),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -140,8 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return const ContactTab();
       case 4:
         return ProfileTab(onToggleTheme: widget.onToggleTheme);
-      case 5:
-        return const _CartTab();
       default:
         return const SizedBox.shrink();
     }
@@ -344,50 +311,6 @@ class _HomeScreenState extends State<HomeScreen> {
           color: const Color(0xFFF55D2C),
           fontWeight: FontWeight.w500,
         ),
-      ),
-    );
-  }
-}
-
-class _NavItem {
-  final String name;
-  final IconData icon;
-  final int index;
-  _NavItem(this.name, this.icon, this.index);
-}
-
-class _CartTab extends StatelessWidget {
-  const _CartTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'Your cart is empty',
-            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Browse our fresh products and add items to your cart',
-            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => _HomeScreenState,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF55D2C),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text('Start Shopping', style: GoogleFonts.poppins()),
-          ),
-        ],
       ),
     );
   }
