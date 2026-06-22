@@ -1,11 +1,153 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
 
   @override
+  State<ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<ProfileTab> {
+  bool _isLoggedIn = false;
+
+  void _showLoginDialog() {
+    final emailCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.set_meal, color: Color(0xFFF55D2C)),
+            const SizedBox(width: 8),
+            Text('Login', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passCtrl,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                prefixIcon: const Icon(Icons.lock_outlined),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {},
+                child: Text(
+                  'Forgot Password?',
+                  style: GoogleFonts.poppins(color: const Color(0xFFF55D2C), fontSize: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() => _isLoggedIn = true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF55D2C),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Login', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _logout() {
+    setState(() => _isLoggedIn = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isLoggedIn) return _buildLoggedOut();
+    return _buildLoggedIn();
+  }
+
+  Widget _buildLoggedOut() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF55D2C).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person_outline, size: 64, color: Color(0xFFF55D2C)),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Welcome to KolkataFish',
+              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Login to view your account, orders, and wishlist',
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _showLoginDialog,
+                icon: const Icon(Icons.login),
+                label: Text('Login', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF55D2C),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {},
+              child: Text(
+                'Don\'t have an account? Register',
+                style: GoogleFonts.poppins(color: const Color(0xFFF55D2C)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoggedIn() {
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [
@@ -84,11 +226,11 @@ class ProfileTab extends StatelessWidget {
         _tile(Icons.help_outline, 'Help Center'),
         _tile(Icons.info_outline, 'Privacy Policy'),
         _tile(Icons.description_outlined, 'Terms of Service'),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: _logout,
             icon: const Icon(Icons.logout, color: Colors.red),
             label: Text(
               'Logout',
@@ -97,29 +239,7 @@ class ProfileTab extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               side: const BorderSide(color: Colors.red),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.login),
-            label: Text(
-              'Login',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF55D2C),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),
@@ -128,7 +248,7 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  static Widget _statItem(String value, String label) {
+  Widget _statItem(String value, String label) {
     return Column(
       children: [
         Text(
@@ -144,7 +264,7 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  static Widget _sectionTitle(String title) {
+  Widget _sectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Text(
@@ -154,7 +274,7 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  static Widget _tile(IconData icon, String title, {String? trailing, Widget? trailingWidget}) {
+  Widget _tile(IconData icon, String title, {String? trailing, Widget? trailingWidget}) {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
