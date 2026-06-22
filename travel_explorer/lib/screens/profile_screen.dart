@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/profile_tile.dart';
 
+
 class ProfileScreen extends StatefulWidget {
   final ValueChanged<bool>? onToggleTheme;
 
@@ -33,9 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: Text(
           'Profile',
-          style: GoogleFonts.playfairDisplay(
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -50,17 +49,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: theme.colorScheme.primary,
+                      color: const Color(0xFFF55D2C),
                       width: 3,
                     ),
                   ),
                   child: CircleAvatar(
                     radius: 54,
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    child: Icon(
+                    backgroundColor: const Color(0xFFF55D2C).withValues(alpha: 0.1),
+                    child: const Icon(
                       Icons.person,
                       size: 54,
-                      color: theme.colorScheme.primary,
+                      color: Color(0xFFF55D2C),
                     ),
                   ),
                 ),
@@ -69,13 +68,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   right: 0,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF55D2C),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: theme.colorScheme.surface,
-                        width: 3,
-                      ),
                     ),
                     child: const Icon(
                       Icons.camera_alt,
@@ -91,7 +86,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Center(
             child: Text(
               'Alex Johnson',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: GoogleFonts.poppins(
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -100,8 +96,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Center(
             child: Text(
               'alex.johnson@email.com',
-              style: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: GoogleFonts.poppins(
+                color: Colors.grey,
                 fontSize: 14,
               ),
             ),
@@ -110,18 +106,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _statItem(theme, '24', 'Countries'),
-              Container(
-                height: 40,
-                width: 1,
-                color: theme.colorScheme.outlineVariant,
-              ),
-              _statItem(theme, '128', 'Places'),
-              Container(
-                height: 40,
-                width: 1,
-                color: theme.colorScheme.outlineVariant,
-              ),
+              _statItem(theme, '24', 'Orders'),
+              Container(height: 40, width: 1, color: Colors.grey.shade300),
+              _statItem(theme, '12', 'Wishlist'),
+              Container(height: 40, width: 1, color: Colors.grey.shade300),
               _statItem(theme, '4.8', 'Rating'),
             ],
           ),
@@ -130,7 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Settings',
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: GoogleFonts.poppins(
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -160,14 +149,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ProfileTile(
             icon: Icons.location_on_outlined,
             title: 'Currency',
-            trailing: 'USD',
+            trailing: 'INR (₹)',
           ),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Account',
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: GoogleFonts.poppins(
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -179,21 +169,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: () {},
           ),
           ProfileTile(
+            icon: Icons.shopping_bag_outlined,
+            title: 'My Orders',
+            trailing: '8',
+            onTap: () {},
+          ),
+          ProfileTile(
             icon: Icons.favorite_outline,
             title: 'Wishlist',
             trailing: '12',
             onTap: () {},
           ),
           ProfileTile(
-            icon: Icons.card_travel_outlined,
-            title: 'My Bookings',
-            trailing: '3',
-            onTap: () {},
-          ),
-          ProfileTile(
-            icon: Icons.reviews_outlined,
-            title: 'Reviews',
-            trailing: '8',
+            icon: Icons.location_on_outlined,
+            title: 'Saved Addresses',
+            trailing: '2',
             onTap: () {},
           ),
           const SizedBox(height: 16),
@@ -201,7 +191,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Support',
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: GoogleFonts.poppins(
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -233,15 +224,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           value,
-          style: theme.textTheme.headlineSmall?.copyWith(
+          style: GoogleFonts.poppins(
+            fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+            color: const Color(0xFFF55D2C),
           ),
         ),
         Text(
           label,
-          style: TextStyle(
-            color: theme.colorScheme.onSurfaceVariant,
+          style: GoogleFonts.poppins(
+            color: Colors.grey,
             fontSize: 13,
           ),
         ),

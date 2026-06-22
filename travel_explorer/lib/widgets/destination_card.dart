@@ -36,15 +36,30 @@ class DestinationCard extends StatelessWidget {
             children: [
               Hero(
                 tag: 'destination_$name',
-                child: Container(
-                  height: 140,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                  ),
+                child: SizedBox(
+                  height: 120,
+                  width: double.infinity,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      _buildPlaceholderImage(theme),
+                      Image.network(
+                        'https://picsum.photos/seed/$imageUrl/400/300',
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: theme.colorScheme.primaryContainer,
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white54,
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildPlaceholderImage(theme);
+                        },
+                      ),
                       Positioned(
                         top: 12,
                         right: 12,
@@ -77,7 +92,7 @@ class DestinationCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -89,7 +104,7 @@ class DestinationCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 0),
                     Row(
                       children: [
                         Icon(Icons.location_on,
@@ -107,7 +122,7 @@ class DestinationCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 2),
                     Text(
                       '\$${price.toStringAsFixed(0)} / person',
                       style: theme.textTheme.titleSmall?.copyWith(
@@ -126,20 +141,9 @@ class DestinationCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholderImage(ThemeData theme) {
-    final colors = [
-      Colors.blue.shade300,
-      Colors.teal.shade300,
-      Colors.purple.shade300,
-      Colors.orange.shade300,
-      Colors.green.shade300,
-      Colors.pink.shade300,
-      Colors.indigo.shade300,
-      Colors.cyan.shade300,
-    ];
-    final color = colors[name.hashCode.abs() % colors.length];
     return Container(
-      color: color,
-      child: Center(
+      color: theme.colorScheme.primaryContainer,
+      child: const Center(
         child: Icon(Icons.photo_camera, size: 48, color: Colors.white54),
       ),
     );

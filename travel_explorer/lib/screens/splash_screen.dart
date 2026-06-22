@@ -67,9 +67,8 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1565C0),
-              Color(0xFF0D47A1),
-              Color(0xFF311B92),
+              Color(0xFFF55D2C),
+              Color(0xFFFF8A65),
             ],
           ),
         ),
@@ -102,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 32),
               Text(
                 'KolkataFish',
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.poppins(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -110,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                'Fresh seafood, delivered to your door',
+                'Fresh Fish & Seafood',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   color: Colors.white70,

@@ -36,6 +36,26 @@ class _GalleryGridState extends State<GalleryGrid> {
     }
   }
 
+  String _getImageUrl(String imageName) {
+    // Use picsum.photos with a seed derived from the image name for consistent unique images
+    return 'https://picsum.photos/seed/$imageName/400/400';
+  }
+
+  Color _getColorFromSeed(String seed) {
+    final hash = seed.hashCode.abs();
+    final colors = [
+      Colors.blue.shade300,
+      Colors.teal.shade300,
+      Colors.purple.shade300,
+      Colors.orange.shade300,
+      Colors.green.shade300,
+      Colors.pink.shade300,
+      Colors.indigo.shade300,
+      Colors.cyan.shade300,
+    ];
+    return colors[hash % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     const crossAxisCount = 2;
@@ -45,7 +65,7 @@ class _GalleryGridState extends State<GalleryGrid> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
@@ -53,21 +73,12 @@ class _GalleryGridState extends State<GalleryGrid> {
       ),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        final colors = [
-          Colors.blue.shade300,
-          Colors.teal.shade300,
-          Colors.purple.shade300,
-          Colors.orange.shade300,
-          Colors.green.shade300,
-          Colors.pink.shade300,
-          Colors.indigo.shade300,
-          Colors.cyan.shade300,
-        ];
-        final color = colors[index % colors.length];
+        final imageName = widget.images[index];
+        final color = _getColorFromSeed(imageName);
 
         return AnimatedOpacity(
           opacity: _opacities[index],
-          duration: Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 500),
           curve: Curves.easeOut,
           child: GestureDetector(
             onTap: () {
@@ -82,17 +93,44 @@ class _GalleryGridState extends State<GalleryGrid> {
                     ),
                     body: Center(
                       child: InteractiveViewer(
-                        child: Container(
-                          width: 300,
-                          height: 300,
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Icon(
-                            Icons.image,
-                            size: 100,
-                            color: Colors.white54,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.network(
+                            _getImageUrl(imageName),
+                            width: 300,
+                            height: 300,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                width: 300,
+                                height: 300,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 300,
+                                height: 300,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: const Icon(
+                                  Icons.image,
+                                  size: 100,
+                                  color: Colors.white54,
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -112,15 +150,32 @@ class _GalleryGridState extends State<GalleryGrid> {
               ),
               child: Hero(
                 tag: '${widget.tag}_$index',
-                child: Container(
-                  decoration: BoxDecoration(color: color),
-                  child: Center(
-                    child: Icon(
-                      Icons.photo,
-                      size: 48,
-                      color: Colors.white54,
-                    ),
-                  ),
+                child: Image.network(
+                  _getImageUrl(imageName),
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      decoration: BoxDecoration(color: color),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white54,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      decoration: BoxDecoration(color: color),
+                      child: const Center(
+                        child: Icon(
+                          Icons.photo,
+                          size: 48,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

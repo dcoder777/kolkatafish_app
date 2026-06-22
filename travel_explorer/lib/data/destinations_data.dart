@@ -1,7 +1,7 @@
 import '../models/destination.dart';
 
 final List<Destination> destinations = [
-  Destination(
+  const Destination(
     id: '1',
     name: 'Santorini',
     location: 'Greece',
@@ -23,7 +23,7 @@ final List<Destination> destinations = [
       'Catamaran cruises',
     ],
   ),
-  Destination(
+  const Destination(
     id: '2',
     name: 'Swiss Alps',
     location: 'Switzerland',
@@ -50,7 +50,7 @@ final List<Destination> destinations = [
       'Alpine hiking trails',
     ],
   ),
-  Destination(
+  const Destination(
     id: '3',
     name: 'Tokyo',
     location: 'Japan',
@@ -72,7 +72,7 @@ final List<Destination> destinations = [
       'Cherry blossom viewing',
     ],
   ),
-  Destination(
+  const Destination(
     id: '4',
     name: 'Bali',
     location: 'Indonesia',
@@ -94,7 +94,7 @@ final List<Destination> destinations = [
       'Traditional spa treatments',
     ],
   ),
-  Destination(
+  const Destination(
     id: '5',
     name: 'Paris',
     location: 'France',
@@ -116,7 +116,7 @@ final List<Destination> destinations = [
       'French cuisine',
     ],
   ),
-  Destination(
+  const Destination(
     id: '6',
     name: 'Amazon Rainforest',
     location: 'Brazil',
@@ -138,7 +138,7 @@ final List<Destination> destinations = [
       'Canopy walkways',
     ],
   ),
-  Destination(
+  const Destination(
     id: '7',
     name: 'Machu Picchu',
     location: 'Peru',
@@ -165,7 +165,7 @@ final List<Destination> destinations = [
       'Sacred Valley tour',
     ],
   ),
-  Destination(
+  const Destination(
     id: '8',
     name: 'Great Barrier Reef',
     location: 'Australia',

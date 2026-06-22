@@ -22,7 +22,7 @@ class KolkataFishApp extends StatefulWidget {
 }
 
 class _KolkataFishAppState extends State<KolkataFishApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
 
   void _toggleTheme(bool isDark) {
     setState(() {
@@ -43,50 +43,23 @@ class _KolkataFishAppState extends State<KolkataFishApp> {
   }
 
   ThemeData _buildLightTheme() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1565C0),
-      brightness: Brightness.light,
-    );
-
     return ThemeData(
       useMaterial3: true,
-      colorScheme: colorScheme,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFFF55D2C),
+        brightness: Brightness.light,
+      ),
+      scaffoldBackgroundColor: Colors.white,
       textTheme: GoogleFonts.poppinsTextTheme(),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        elevation: 2,
-        indicatorColor: colorScheme.primaryContainer,
-        backgroundColor: colorScheme.surface,
-        labelTextStyle: WidgetStatePropertyAll(
-          GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: colorScheme.onSurface,
-          ),
-        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
       ),
       cardTheme: CardThemeData(
         elevation: 1,
         shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -95,53 +68,19 @@ class _KolkataFishAppState extends State<KolkataFishApp> {
   }
 
   ThemeData _buildDarkTheme() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1565C0),
-      brightness: Brightness.dark,
-    );
-
     return ThemeData(
       useMaterial3: true,
-      colorScheme: colorScheme,
-      textTheme: GoogleFonts.poppinsTextTheme(Typography.blackMountainView),
-      appBarTheme: AppBarTheme(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFFF55D2C),
+        brightness: Brightness.dark,
+      ),
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      textTheme: GoogleFonts.poppinsTextTheme(Typography.whiteMountainView),
+      appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        elevation: 2,
-        indicatorColor: colorScheme.primaryContainer,
-        backgroundColor: colorScheme.surface,
-        labelTextStyle: WidgetStatePropertyAll(
-          GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: colorScheme.onSurface,
-          ),
-        ),
-      ),
-      cardTheme: CardThemeData(
-        elevation: 1,
-        shadowColor: Colors.black38,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        backgroundColor: Color(0xFF1E1E1E),
+        foregroundColor: Colors.white,
       ),
     );
   }

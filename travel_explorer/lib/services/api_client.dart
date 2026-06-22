@@ -31,8 +31,8 @@ class ApiClient {
         .replace(queryParameters: _buildAuthParams(params));
 
     return _client
-        .get(uri, headers: {'User-Agent': 'KolkataFish/1.0'})
-        .timeout(Duration(seconds: AppConfig.timeoutSeconds));
+        .get(uri, headers: {'User-Agent': 'PhisPhis/1.0'})
+        .timeout(const Duration(seconds: AppConfig.timeoutSeconds));
   }
 
   /// Perform a POST request to [endpoint] with optional [body].
@@ -48,11 +48,11 @@ class ApiClient {
           uri,
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': 'KolkataFish/1.0',
+            'User-Agent': 'PhisPhis/1.0',
           },
           body: body != null ? jsonEncode(body) : null,
         )
-        .timeout(Duration(seconds: AppConfig.timeoutSeconds));
+        .timeout(const Duration(seconds: AppConfig.timeoutSeconds));
   }
 
   /// Build query parameters with OAuth 1.0a signature.

@@ -6,33 +6,28 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'About',
-          style: GoogleFonts.playfairDisplay(
-            fontWeight: FontWeight.bold,
-          ),
+          'About KolkataFish',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const SizedBox(height: 20),
           Center(
             child: Container(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
+                color: const Color(0xFFF55D2C).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.set_meal,
                 size: 64,
-                color: theme.colorScheme.primary,
+                color: Color(0xFFF55D2C),
               ),
             ),
           ),
@@ -40,10 +35,9 @@ class AboutScreen extends StatelessWidget {
           Center(
             child: Text(
               'KolkataFish',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.poppins(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
               ),
             ),
           ),
@@ -51,33 +45,31 @@ class AboutScreen extends StatelessWidget {
           Center(
             child: Text(
               'Version 1.0.0',
-              style: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: GoogleFonts.poppins(color: Colors.grey),
             ),
           ),
           const SizedBox(height: 32),
           Card(
             elevation: 0,
-            color: theme.colorScheme.surfaceContainerHighest,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: Colors.grey.shade50,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Fresh from the Coast',
-                    style: theme.textTheme.titleLarge?.copyWith(
+                    'About Us',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'KolkataFish brings the freshest seafood straight from the coast to your doorstep. Explore a wide variety of premium fish, prawns, crabs, and more — sourced sustainably and delivered daily.',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    'KolkataFish is a B2C venture of Kolkata and Howrah for Online Fresh Water Fish, Sea Food Fish, Prawns, Chicken and Muttons. We are committed to delivering the freshest catch directly to your doorstep.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
                       height: 1.6,
                     ),
                   ),
@@ -88,26 +80,25 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Card(
             elevation: 0,
-            color: theme.colorScheme.surfaceContainerHighest,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: Colors.grey.shade50,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Features',
-                    style: theme.textTheme.titleLarge?.copyWith(
+                    'Our Promise',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _featureItem(theme, Icons.set_meal, 'Browse seafood'),
-                  _featureItem(theme, Icons.search, 'Search products'),
-                  _featureItem(theme, Icons.favorite, 'Save favorites'),
-                  _featureItem(theme, Icons.photo_library, 'View galleries'),
-                  _featureItem(theme, Icons.shopping_cart, 'Easy checkout'),
+                  _featureItem(Icons.verified, '100% Fresh Water Products'),
+                  _featureItem(Icons.science, '0% Chemicals'),
+                  _featureItem(Icons.local_shipping, 'Home Delivery'),
+                  _featureItem(Icons.support_agent, '24/7 Customer Support'),
+                  _featureItem(Icons.lock, 'Secure Payments'),
                 ],
               ),
             ),
@@ -115,9 +106,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Card(
             elevation: 0,
-            color: theme.colorScheme.surfaceContainerHighest,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: Colors.grey.shade50,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -125,15 +114,16 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Tech Stack',
-                    style: theme.textTheme.titleLarge?.copyWith(
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _techItem(theme, 'Flutter', 'UI Framework'),
-                  _techItem(theme, 'Material 3', 'Design System'),
-                  _techItem(theme, 'WooCommerce', 'Backend API'),
-                  _techItem(theme, 'Google Fonts', 'Typography'),
+                  _techItem('Flutter', 'UI Framework'),
+                  _techItem('Material 3', 'Design System'),
+                  _techItem('WooCommerce', 'Backend API'),
+                  _techItem('Google Fonts', 'Typography'),
                 ],
               ),
             ),
@@ -141,9 +131,9 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Made with love for Kolkata',
-              style: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant,
+              'Made with ❤️ for Kolkata',
+              style: GoogleFonts.poppins(
+                color: Colors.grey,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -154,37 +144,37 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _featureItem(ThemeData theme, IconData icon, String text) {
+  Widget _featureItem(IconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 18, color: theme.colorScheme.primary),
-          ),
+          Icon(icon, size: 18, color: const Color(0xFFF55D2C)),
           const SizedBox(width: 12),
-          Text(text, style: theme.textTheme.bodyLarge),
+          Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 14),
+          ),
         ],
       ),
     );
   }
 
-  Widget _techItem(ThemeData theme, String label, String desc) {
+  Widget _techItem(String label, String desc) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodyLarge),
+          Text(
+            label,
+            style: GoogleFonts.poppins(fontSize: 14),
+          ),
           Text(
             desc,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey,
             ),
           ),
         ],

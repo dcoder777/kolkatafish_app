@@ -15,44 +15,29 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFFF55D2C),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             Icons.set_meal,
             color: Colors.white,
-            size: iconSize - 16,
+            size: iconSize - 18,
           ),
         ),
-        const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'KolkataFish',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            if (showSubtitle)
-              Text(
-                'Fresh seafood, delivered',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-          ],
+        const SizedBox(width: 8),
+        Text(
+          'KolkataFish',
+          style: GoogleFonts.poppins(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFF55D2C),
+          ),
         ),
       ],
     );

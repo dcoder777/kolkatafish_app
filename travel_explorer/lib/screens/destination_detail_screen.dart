@@ -22,7 +22,7 @@ class DestinationDetailScreen extends StatelessWidget {
             pinned: true,
             leading: Container(
               margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.black26,
                 shape: BoxShape.circle,
               ),
@@ -34,75 +34,101 @@ class DestinationDetailScreen extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
                 tag: 'destination_${destination.name}',
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primaryContainer,
-                        theme.colorScheme.secondaryContainer,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Center(
-                        child: Icon(
-                          Icons.landscape,
-                          size: 100,
-                          color: theme.colorScheme.onPrimaryContainer
-                              .withValues(alpha: 0.3),
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.5),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 20,
-                        right: 20,
-                        bottom: 24,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              destination.name,
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.white70, size: 18),
-                                const SizedBox(width: 6),
-                                Text(
-                                  destination.location,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      'https://picsum.photos/seed/${destination.imageUrl}/600/800',
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primaryContainer,
+                                theme.colorScheme.secondaryContainer,
                               ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
+                          ),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primaryContainer,
+                                theme.colorScheme.secondaryContainer,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.landscape,
+                              size: 100,
+                              color: theme.colorScheme.onPrimaryContainer
+                                  .withValues(alpha: 0.3),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.5),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      bottom: 24,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            destination.name,
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on,
+                                  color: Colors.white70, size: 18),
+                              const SizedBox(width: 6),
+                              Text(
+                                destination.location,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -200,12 +226,7 @@ class DestinationDetailScreen extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       itemCount: destination.galleryImages.length,
                       itemBuilder: (context, index) {
-                        final colors = [
-                          Colors.blue.shade300,
-                          Colors.teal.shade300,
-                          Colors.purple.shade300,
-                          Colors.orange.shade300,
-                        ];
+                        final imageName = destination.galleryImages[index];
                         return Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: GestureDetector(
@@ -220,18 +241,52 @@ class DestinationDetailScreen extends StatelessWidget {
                             },
                             child: Hero(
                               tag: '${destination.name}_$index',
-                              child: Container(
-                                width: 120,
-                                decoration: BoxDecoration(
-                                  color: colors[index % colors.length],
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.photo,
-                                    size: 36,
-                                    color: Colors.white54,
-                                  ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.network(
+                                  'https://picsum.photos/seed/$imageName/200/200',
+                                  width: 120,
+                                  height: 120,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      width: 120,
+                                      height: 120,
+                                      color: Colors.grey.shade300,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white54,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    final colors = [
+                                      Colors.blue.shade300,
+                                      Colors.teal.shade300,
+                                      Colors.purple.shade300,
+                                      Colors.orange.shade300,
+                                    ];
+                                    return Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            colors[index % colors.length],
+                                        borderRadius:
+                                            BorderRadius.circular(16),
+                                      ),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.photo,
+                                          size: 36,
+                                          color: Colors.white54,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ),
