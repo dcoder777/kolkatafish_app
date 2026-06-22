@@ -30,6 +30,7 @@ class ShopTab extends StatelessWidget {
         ),
         Expanded(
           child: GridView.builder(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,

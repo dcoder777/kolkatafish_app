@@ -8,6 +8,7 @@ class AboutTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20),
       children: [
         Center(
