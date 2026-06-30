@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import 'payment_screen.dart';
 
@@ -17,6 +18,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressCtrl = TextEditingController(text: '86, Thakurpukur Road');
   final _cityCtrl = TextEditingController(text: 'Kolkata');
   final _pincodeCtrl = TextEditingController(text: '700063');
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isGuest) {
+        _nameCtrl.text = auth.userName;
+        _phoneCtrl.text = auth.userPhone;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -43,6 +56,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Consumer<AuthProvider>(
+              builder: (_, auth, __) => auth.isGuest
+                  ? Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFF55D2C).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_outline, color: const Color(0xFFF55D2C)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Guest Checkout',
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                                const SizedBox(height: 2),
+                                Text('${auth.userName} • ${auth.userPhone}',
+                                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
             _sectionHeader('Delivery Address'),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
