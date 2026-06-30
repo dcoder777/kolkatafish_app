@@ -250,17 +250,39 @@ void _showAuthRequiredDialog(BuildContext context) {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const CheckoutScreen()));
-                    },
-                    child: Text(
-                      'Continue as Guest',
-                      style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey),
+                  Divider(color: Colors.grey.shade200),
+                  const SizedBox(height: 4),
+                  Text(
+                    '— or —',
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _showGuestCheckoutDialog(context);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Color(0xFFF55D2C)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.person_outline, size: 18, color: const Color(0xFFF55D2C)),
+                          const SizedBox(width: 8),
+                          Text('Continue as Guest',
+                              style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFFF55D2C))),
+                        ],
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text('Quick checkout — no password needed',
+                      style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey)),
                 ],
               ),
             ),
@@ -268,6 +290,78 @@ void _showAuthRequiredDialog(BuildContext context) {
         },
       );
     },
+  );
+}
+
+void _showGuestCheckoutDialog(BuildContext context) {
+  final nameCtrl = TextEditingController();
+  final phoneCtrl = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(children: [
+        Icon(Icons.person_outline, color: const Color(0xFFF55D2C)),
+        const SizedBox(width: 8),
+        Text('Guest Checkout', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+      ]),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Enter your details to place the order.\nWe\'ll use these for delivery and tracking.',
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: nameCtrl,
+            decoration: InputDecoration(
+              labelText: 'Full Name *',
+              prefixIcon: const Icon(Icons.person_outlined),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: phoneCtrl,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              labelText: 'Phone Number *',
+              prefixIcon: const Icon(Icons.phone_outlined),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (nameCtrl.text.trim().isEmpty || phoneCtrl.text.trim().isEmpty) {
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('Please fill all fields', style: GoogleFonts.poppins()),
+                behavior: SnackBarBehavior.floating,
+              ));
+              return;
+            }
+            context.read<AuthProvider>().loginAsGuest(nameCtrl.text, phoneCtrl.text);
+            Navigator.pop(ctx);
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF55D2C),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          child: Text('Continue', style: GoogleFonts.poppins()),
+        ),
+      ],
+    ),
   );
 }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {
   final double total;
@@ -65,7 +67,42 @@ class OrderConfirmationScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              Consumer<AuthProvider>(
+                builder: (_, auth, __) => auth.isGuest
+                    ? Card(
+                        color: Colors.orange.shade50,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              Icon(Icons.person_add, size: 32, color: const Color(0xFFF55D2C)),
+                              const SizedBox(height: 8),
+                              Text('Save your order history!',
+                                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 4),
+                              Text('Create an account to track all your orders.',
+                                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey),
+                                  textAlign: TextAlign.center),
+                              const SizedBox(height: 10),
+                              OutlinedButton(
+                                onPressed: () {},
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFF55D2C)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: Text('Create Account',
+                                    style: GoogleFonts.poppins(
+                                        color: const Color(0xFFF55D2C), fontWeight: FontWeight.w600)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
