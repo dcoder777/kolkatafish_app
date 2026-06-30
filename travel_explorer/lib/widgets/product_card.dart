@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../models/sea_product.dart';
+import '../providers/cart_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final SeaProduct product;
@@ -11,6 +13,10 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cart = context.watch<CartProvider>();
+    final isFav = cart.isInWishlist(product);
+    final isInCart = cart.isInCart(product);
+
     final colors = [
       Colors.blue.shade200,
       Colors.orange.shade200,
@@ -42,42 +48,22 @@ class ProductCard extends StatelessWidget {
                   ),
                   if (product.isSale)
                     Positioned(
-                      top: 4,
-                      left: 4,
+                      top: 4, left: 4,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Sale',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
+                        child: Text('Sale',
+                            style: GoogleFonts.poppins(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   if (product.isNew)
                     Positioned(
-                      top: 4,
-                      left: 4,
+                      top: 4, left: 4,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'New',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(4)),
+                        child: Text('New',
+                            style: GoogleFonts.poppins(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                 ],
@@ -88,99 +74,72 @@ class ProductCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    product.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text(product.name,
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                      maxLines: 2, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
-                  Text(
-                    product.weight,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  Text(product.weight, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey)),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber, size: 12),
-                      const SizedBox(width: 2),
-                      Text(
-                        product.rating.toString(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+                  Row(children: [
+                    Icon(Icons.star, color: Colors.amber, size: 12),
+                    const SizedBox(width: 2),
+                    Text(product.rating.toString(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w500)),
+                  ]),
                   const SizedBox(height: 4),
-                  Text(
-                    product.formattedPrice,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+                  Text(product.formattedPrice,
+                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.circle,
-                        size: 8,
-                        color: product.inStock ? Colors.green : Colors.red,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        product.inStock ? 'In stock' : 'Out of stock',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: product.inStock ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
+                  Row(children: [
+                    Icon(Icons.circle, size: 8, color: product.inStock ? Colors.green : Colors.red),
+                    const SizedBox(width: 4),
+                    Text(product.inStock ? 'In stock' : 'Out of stock',
+                        style: GoogleFonts.poppins(fontSize: 10, color: product.inStock ? Colors.green : Colors.red)),
+                  ]),
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: isInCart
+                          ? () {
+                              cart.removeFromCart(product);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${product.name} removed from cart', style: GoogleFonts.poppins()),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              );
+                            }
+                          : () {
+                              cart.addToCart(product);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${product.name} added to cart!', style: GoogleFonts.poppins()),
+                                  backgroundColor: const Color(0xFF4CAF50),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              );
+                            },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF55D2C),
+                        backgroundColor: isInCart ? Colors.grey : const Color(0xFFF55D2C),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       ),
-                      child: Text(
-                        'Add to cart',
-                        style: GoogleFonts.poppins(fontSize: 11),
-                      ),
+                      child: Text(isInCart ? 'Remove' : 'Add to cart', style: GoogleFonts.poppins(fontSize: 11)),
                     ),
                   ),
                   const SizedBox(height: 4),
                   GestureDetector(
-                    onTap: () {},
-                    child: Row(
-                      children: [
-                        const Icon(Icons.favorite_border, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Add to wishlist',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
+                    onTap: () => cart.toggleWishlist(product),
+                    child: Row(children: [
+                      Icon(isFav ? Icons.favorite : Icons.favorite_border,
+                          size: 14, color: isFav ? Colors.red : Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(isFav ? 'In wishlist' : 'Add to wishlist',
+                          style: GoogleFonts.poppins(fontSize: 10, color: isFav ? Colors.red : Colors.grey)),
+                    ]),
                   ),
                 ],
               ),

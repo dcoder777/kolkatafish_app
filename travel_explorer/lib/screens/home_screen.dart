@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/cart_provider.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/trust_badges.dart';
@@ -8,7 +10,7 @@ import '../data/sea_categories.dart';
 import '../widgets/product_card.dart';
 import 'shop_tab.dart';
 import 'about_tab.dart';
-import 'contact_tab_v2.dart';
+import 'cart_tab.dart';
 import 'profile_tab.dart';
 import 'product_detail_screen.dart';
 
@@ -66,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 65,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         indicatorColor: const Color(0xFFF55D2C).withValues(alpha: 0.1),
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded, color: Color(0xFFF55D2C)),
@@ -83,9 +85,45 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Shop',
           ),
           NavigationDestination(
-            icon: Icon(Icons.mail_outline),
-            selectedIcon: Icon(Icons.mail_rounded, color: Color(0xFFF55D2C)),
-            label: 'Contact',
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.shopping_cart_outlined),
+                Positioned(
+                  right: -8, top: -4,
+                  child: Consumer<CartProvider>(
+                    builder: (_, cart, __) => cart.cartCount > 0
+                        ? Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                            child: Text('${cart.cartCount}',
+                                style: GoogleFonts.poppins(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ),
+            selectedIcon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.shopping_cart_rounded, color: Color(0xFFF55D2C)),
+                Positioned(
+                  right: -8, top: -4,
+                  child: Consumer<CartProvider>(
+                    builder: (_, cart, __) => cart.cartCount > 0
+                        ? Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                            child: Text('${cart.cartCount}',
+                                style: GoogleFonts.poppins(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ),
+            label: 'Cart',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
@@ -104,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         return const ShopTab();
       case 3:
-        return const ContactTab();
+        return const CartTab();
       case 4:
         return const ProfileTab();
       default:

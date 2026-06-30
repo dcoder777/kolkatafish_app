@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/cart_provider.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -254,6 +256,69 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
+  void _showWishlistSheet(BuildContext context) {
+    final cart = context.read<CartProvider>();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        final wishlist = context.watch<CartProvider>().wishlistItems;
+        return SizedBox(
+          height: 400,
+          child: wishlist.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.favorite_border, size: 64, color: Colors.grey.shade300),
+                      const SizedBox(height: 12),
+                      Text('No items in wishlist',
+                          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text('My Wishlist (${wishlist.length} items)',
+                          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: wishlist.length,
+                        itemBuilder: (ctx, i) {
+                          final item = wishlist[i];
+                          return ListTile(
+                            leading: Container(
+                              width: 48, height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.set_meal, color: const Color(0xFFF55D2C)),
+                            ),
+                            title: Text(item.name,
+                                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                            subtitle: Text(item.formattedPrice,
+                                style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFFF55D2C))),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => cart.toggleWishlist(item),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+
   void _logout() {
     setState(() => _isLoggedIn = false);
   }
@@ -389,8 +454,8 @@ class _ProfileTabState extends State<ProfileTab> {
         _sectionTitle('Account'),
         const SizedBox(height: 12),
         _tile(Icons.person_outline, 'Edit Profile'),
+        _tile(Icons.favorite_outline, 'Wishlist', trailing: '12', onTap: () => _showWishlistSheet(context)),
         _tile(Icons.shopping_bag_outlined, 'My Orders', trailing: '8'),
-        _tile(Icons.favorite_outline, 'Wishlist', trailing: '12'),
         _tile(Icons.location_on_outlined, 'Saved Addresses', trailing: '2'),
         const SizedBox(height: 16),
         _sectionTitle('Support'),
@@ -446,13 +511,14 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  Widget _tile(IconData icon, String title, {String? trailing, Widget? trailingWidget}) {
+  Widget _tile(IconData icon, String title, {String? trailing, Widget? trailingWidget, VoidCallback? onTap}) {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       color: Colors.grey.shade50,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ListTile(
+        onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
