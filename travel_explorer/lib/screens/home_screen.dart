@@ -38,9 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
             margin: const EdgeInsets.only(right: 12),
             child: ElevatedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.phone, size: 16),
+              icon: const Icon(Icons.headset_mic_outlined, size: 16),
               label: Text(
-                'Call us',
+                'Support',
                 style: GoogleFonts.poppins(fontSize: 12),
               ),
               style: ElevatedButton.styleFrom(
