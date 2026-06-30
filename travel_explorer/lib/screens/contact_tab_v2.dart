@@ -40,7 +40,7 @@ class ContactTab extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
-        _contactCard(Icons.phone, 'Call Us', '+91 9830083112', '+91 8017404851'),
+        _contactCard(Icons.headset_mic_outlined, 'Support', '+91 9830083112', '+91 8017404851'),
         const SizedBox(height: 12),
         _contactCard(Icons.email, 'Email Us', 'kolkatfish72@gmail.com', 'kolkatfish83@gmail.com'),
         const SizedBox(height: 12),

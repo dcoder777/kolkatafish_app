@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/toast_helper.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -122,13 +123,7 @@ class ProfileTab extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Password reset link sent to ${emailCtrl.text}',
-                    style: GoogleFonts.poppins()),
-                backgroundColor: const Color(0xFF4CAF50),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ));
+              showSuccessToast(context, 'Password reset link sent to ${emailCtrl.text}');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,
@@ -212,13 +207,7 @@ class ProfileTab extends StatelessWidget {
             onPressed: () {
               Navigator.pop(ctx);
               _doLogin(context, nameCtrl.text, emailCtrl.text);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Welcome, ${nameCtrl.text}! Account created.',
-                    style: GoogleFonts.poppins()),
-                backgroundColor: const Color(0xFF4CAF50),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ));
+              showSuccessToast(context, 'Welcome, ${nameCtrl.text}! Account created.');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,

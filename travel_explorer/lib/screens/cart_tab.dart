@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/toast_helper.dart';
 import 'product_detail_screen.dart';
 import 'checkout_screen.dart';
 
@@ -342,10 +343,7 @@ void _showGuestCheckoutDialog(BuildContext context) {
         ElevatedButton(
           onPressed: () {
             if (nameCtrl.text.trim().isEmpty || phoneCtrl.text.trim().isEmpty) {
-              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                content: Text('Please fill all fields', style: GoogleFonts.poppins()),
-                behavior: SnackBarBehavior.floating,
-              ));
+              showWarningToast(ctx, 'Please fill all fields');
               return;
             }
             context.read<AuthProvider>().loginAsGuest(nameCtrl.text, phoneCtrl.text);

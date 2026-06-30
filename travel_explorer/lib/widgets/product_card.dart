@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/sea_product.dart';
 import '../providers/cart_provider.dart';
+import '../utils/toast_helper.dart';
 
 class ProductCard extends StatelessWidget {
   final SeaProduct product;
@@ -102,24 +103,11 @@ class ProductCard extends StatelessWidget {
                       onPressed: isInCart
                           ? () {
                               cart.removeFromCart(product);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${product.name} removed from cart', style: GoogleFonts.poppins()),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                              );
+                              showInfoToast(context, '${product.name} removed from cart');
                             }
                           : () {
                               cart.addToCart(product);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${product.name} added to cart!', style: GoogleFonts.poppins()),
-                                  backgroundColor: const Color(0xFF4CAF50),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                              );
+                              showSuccessToast(context, '${product.name} added to cart!');
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isInCart ? Colors.grey : const Color(0xFFF55D2C),

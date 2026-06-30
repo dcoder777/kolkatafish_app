@@ -54,8 +54,8 @@ class ContactTab extends StatelessWidget {
           const SizedBox(height: 32),
           _contactCard(
             theme,
-            Icons.phone,
-            'Call Us',
+            Icons.headset_mic_outlined,
+            'Support',
             '+91 9830083112',
             '+91 8017404851',
           ),

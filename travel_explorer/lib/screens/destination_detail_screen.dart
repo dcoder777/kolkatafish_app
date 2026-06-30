@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/destination.dart';
+import '../utils/toast_helper.dart';
 import '../widgets/rating_widget.dart';
 import 'gallery_screen.dart';
 
@@ -301,16 +302,9 @@ class DestinationDetailScreen extends StatelessWidget {
                     height: 56,
                     child: FilledButton.icon(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Booking feature coming soon for ${destination.name}!',
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                        showInfoToast(
+                          context,
+                          'Booking feature coming soon for ${destination.name}!',
                         );
                       },
                       icon: const Icon(Icons.flight_takeoff),
