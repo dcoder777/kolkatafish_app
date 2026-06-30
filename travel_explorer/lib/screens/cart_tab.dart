@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import 'product_detail_screen.dart';
+import 'checkout_screen.dart';
 
 class CartTab extends StatelessWidget {
   const CartTab({super.key});
@@ -78,28 +79,50 @@ class CartTab extends StatelessWidget {
             color: Colors.white,
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -2))],
           ),
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('${cart.cartCount} items', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
-                    Text('Total: ₹${cart.cartTotal.toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
-                  ],
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${cart.cartCount} items', style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                        Text('Total: ₹${cart.cartTotal.toStringAsFixed(0)}',
+                            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => cart.clearCart(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text('Clear', style: GoogleFonts.poppins()),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () => cart.clearCart(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade50,
-                  foregroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF55D2C),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('Proceed to Checkout',
+                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
-                child: Text('Clear', style: GoogleFonts.poppins()),
               ),
             ],
           ),
