@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import 'product_detail_screen.dart';
 import 'checkout_screen.dart';
 
@@ -110,10 +111,7 @@ class CartTab extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const CheckoutScreen()));
-                  },
+                  onPressed: () => _proceedToCheckout(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF55D2C),
                     foregroundColor: Colors.white,
@@ -131,3 +129,145 @@ class CartTab extends StatelessWidget {
     );
   }
 }
+
+void _proceedToCheckout(BuildContext context) {
+  final auth = context.read<AuthProvider>();
+  if (auth.isLoggedIn) {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+  } else {
+    _showAuthRequiredDialog(context);
+  }
+}
+
+void _showAuthRequiredDialog(BuildContext context) {
+  final auth = context.read<AuthProvider>();
+  final nameCtrl = TextEditingController();
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+  bool isLoginTab = true;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (_, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 24, right: 24, top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                  const SizedBox(height: 16),
+                  Icon(Icons.lock_outlined, size: 48, color: const Color(0xFFF55D2C)),
+                  const SizedBox(height: 8),
+                  Text(
+                    isLoginTab ? 'Login to Continue' : 'Create an Account',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isLoginTab
+                        ? 'Login to place your order and track deliveries'
+                        : 'Register to enjoy faster checkout',
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  if (!isLoginTab)
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Full Name',
+                        prefixIcon: const Icon(Icons.person_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  if (!isLoginTab) const SizedBox(height: 10),
+                  TextField(
+                    controller: emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: passCtrl,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final name = isLoginTab ? 'Alex Johnson' : nameCtrl.text;
+                        final email = emailCtrl.text;
+                        auth.login(name, email);
+                        Navigator.pop(ctx);
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF55D2C),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(
+                        isLoginTab ? 'Login' : 'Register',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () => setSheetState(() => isLoginTab = !isLoginTab),
+                    child: Text(
+                      isLoginTab
+                          ? "Don't have an account? Register"
+                          : 'Already have an account? Login',
+                      style: GoogleFonts.poppins(fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+                    },
+                    child: Text(
+                      'Continue as Guest',
+                      style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
