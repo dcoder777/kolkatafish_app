@@ -103,11 +103,11 @@ class ProductCard extends StatelessWidget {
                       onPressed: isInCart
                           ? () {
                               cart.removeFromCart(product);
-                              showInfoToast(context, '${product.name} removed from cart');
+                              showCartToast(context, product, added: false);
                             }
                           : () {
                               cart.addToCart(product);
-                              showSuccessToast(context, '${product.name} added to cart!');
+                              showCartToast(context, product, added: true);
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isInCart ? Colors.grey : const Color(0xFFF55D2C),

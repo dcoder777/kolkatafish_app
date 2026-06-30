@@ -1,61 +1,78 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../models/sea_product.dart';
+import '../widgets/modern_toast.dart';
 
-enum ToastType { success, error, info, warning }
+export '../widgets/modern_toast.dart' show ToastStyle;
 
 void showAppToast(
   BuildContext context,
   String message, {
-  ToastType type = ToastType.info,
+  String? title,
+  ToastStyle style = ToastStyle.info,
   Duration duration = const Duration(seconds: 2),
 }) {
-  final (icon, color) = switch (type) {
-    ToastType.success => (Icons.check_circle_outline, const Color(0xFF4CAF50)),
-    ToastType.error => (Icons.error_outline, const Color(0xFFE53935)),
-    ToastType.warning => (Icons.warning_amber_outlined, const Color(0xFFFF9800)),
-    ToastType.info => (Icons.info_outline, const Color(0xFFF55D2C)),
-  };
-
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: color,
-      behavior: SnackBarBehavior.floating,
-      elevation: 6,
-      duration: duration,
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      dismissDirection: DismissDirection.horizontal,
-    ),
+  ModernToast.show(
+    context,
+    message: message,
+    title: title,
+    style: style,
+    duration: duration,
   );
 }
 
 void showSuccessToast(BuildContext context, String message) =>
-    showAppToast(context, message, type: ToastType.success);
+    showAppToast(context, message, style: ToastStyle.success);
 
 void showErrorToast(BuildContext context, String message) =>
-    showAppToast(context, message, type: ToastType.error, duration: const Duration(seconds: 3));
+    showAppToast(context, message, style: ToastStyle.error, duration: const Duration(seconds: 3));
 
 void showWarningToast(BuildContext context, String message) =>
-    showAppToast(context, message, type: ToastType.warning);
+    showAppToast(context, message, style: ToastStyle.warning);
 
 void showInfoToast(BuildContext context, String message) =>
-    showAppToast(context, message, type: ToastType.info);
+    showAppToast(context, message, style: ToastStyle.info);
+
+void showCartToast(
+  BuildContext context,
+  SeaProduct product, {
+  required bool added,
+  VoidCallback? onViewCart,
+}) {
+  ModernToast.show(
+    context,
+    title: product.name,
+    message: added ? 'Added to cart' : 'Removed from cart',
+    style: added ? ToastStyle.success : ToastStyle.info,
+    duration: const Duration(seconds: 3),
+    actionLabel: onViewCart != null ? 'View Cart' : null,
+    onAction: onViewCart,
+    leading: ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: product.imageUrl.isNotEmpty
+          ? Image.network(
+              product.imageUrl,
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _fallbackIcon(added),
+            )
+          : _fallbackIcon(added),
+    ),
+  );
+}
+
+Widget _fallbackIcon(bool added) {
+  return Container(
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      color: (added ? const Color(0xFF4CAF50) : const Color(0xFF757575)).withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Icon(
+      added ? Icons.check_rounded : Icons.remove_shopping_cart_outlined,
+      color: added ? const Color(0xFF4CAF50) : const Color(0xFF757575),
+      size: 20,
+    ),
+  );
+}
