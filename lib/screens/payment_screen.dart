@@ -7,22 +7,32 @@ import '../services/store_api_service.dart';
 import '../utils/toast_helper.dart';
 import 'order_confirmation_screen.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 class PaymentScreen extends StatefulWidget {
   final double total;
   final String customerName;
+  final String customerEmail;
   final String phone;
+  final String altPhone;
   final String address1;
   final String city;
   final String pincode;
+  final String deliveryDate;
+  final String deliverySlot;
 
   const PaymentScreen({
     super.key,
     required this.total,
     required this.customerName,
+    this.customerEmail = '',
     required this.phone,
+    this.altPhone = '',
     required this.address1,
     required this.city,
     required this.pincode,
+    required this.deliveryDate,
+    required this.deliverySlot,
   });
 
   @override
@@ -33,8 +43,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String _selectedPayment = 'cod';
   bool _placing = false;
 
-  String get _paymentLabel =>
-      _selectedPayment == 'cod' ? 'Cash on Delivery' : _selectedPayment.toUpperCase();
+  String get _paymentLabel {
+    switch (_selectedPayment) {
+      case 'razorpay':
+        return 'Online (UPI / Card / NetBanking)';
+      case 'cod':
+      default:
+        return 'Cash on Delivery';
+    }
+  }
 
   Future<void> _placeOrder() async {
     if (_placing) return;
@@ -51,7 +68,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
     int? serverId;
     String orderKey = '';
     String status = 'processing';
+    String redirectUrl = '';
     String? syncError;
+
+    // Build comprehensive customer note containing custom WooCommerce delivery slots
+    final noteBuffer = StringBuffer();
+    noteBuffer.writeln('Delivery Date: ${widget.deliveryDate}');
+    noteBuffer.writeln('Delivery Slot: ${widget.deliverySlot}');
+    if (widget.altPhone.isNotEmpty) {
+      noteBuffer.writeln('Alternative Phone: ${widget.altPhone}');
+    }
+    noteBuffer.writeln('Delivery Charge: ₹50');
+    noteBuffer.writeln('App Order Total: ₹${widget.total.toStringAsFixed(0)}');
 
     try {
       final session = await service.createCart();
@@ -60,9 +88,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         if (productId == null) continue;
         await service.addToCart(session, productId);
       }
-      final email = auth.userEmail.isNotEmpty
-          ? auth.userEmail
-          : 'customer${widget.phone}@kolkatafish.app';
+      final email = widget.customerEmail.isNotEmpty
+          ? widget.customerEmail
+          : (auth.userEmail.isNotEmpty
+              ? auth.userEmail
+              : 'customer${widget.phone}@kolkatafish.app');
       final result = await service.checkout(
         session: session,
         firstName: widget.customerName.split(' ').first,
@@ -76,13 +106,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
         country: 'IN',
         email: email,
         phone: widget.phone,
-        paymentMethod: 'cod',
-        customerNote:
-            'Order placed from KolkataFish app. Delivery charge ₹50 is collected separately in the app total.',
+        paymentMethod: _selectedPayment,
+        customerNote: noteBuffer.toString(),
       );
       serverId = result.orderId;
       orderKey = result.orderKey;
       status = result.status.isEmpty ? 'processing' : result.status;
+      redirectUrl = result.redirectUrl;
     } catch (e) {
       syncError = e is StoreApiException ? e.message : 'Could not reach the store';
     } finally {
@@ -90,6 +120,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     if (!mounted) return;
+
+    // For Razorpay online payment: if server sync failed or order could not be created on WooCommerce,
+    // DO NOT pretend order succeeded. Show error toast so user can retry or choose COD.
+    if (_selectedPayment == 'razorpay' && serverId == null) {
+      showErrorToast(
+        context,
+        syncError != null
+            ? 'Store checkout error: $syncError'
+            : 'Could not connect to payment gateway. Please try again.',
+      );
+      return;
+    }
 
     final order = cart.recordOrder(
       total: widget.total,
@@ -104,6 +146,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
       items: items,
     );
     cart.clearCart();
+
+    // If online payment (Razorpay) returned a payment/checkout redirect URL, launch it immediately
+    if (redirectUrl.isNotEmpty) {
+      final uri = Uri.tryParse(redirectUrl);
+      if (uri != null) {
+        try {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } catch (_) {}
+      }
+    }
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -131,24 +183,56 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader('Delivery To'),
+            _sectionHeader('Delivery Details'),
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: ListTile(
-                leading: const Icon(Icons.location_on, color: Color(0xFFF55D2C)),
-                title: Text(widget.customerName,
-                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                    '${widget.address1}, ${widget.city} - ${widget.pincode}\nPh: ${widget.phone}',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
-                isThreeLine: true,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.location_on, color: Color(0xFFF55D2C)),
+                      title: Text(widget.customerName,
+                          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                      subtitle: Text(
+                          '${widget.address1}, ${widget.city} - ${widget.pincode}\nPh: ${widget.phone}${widget.altPhone.isNotEmpty ? ' | Alt: ${widget.altPhone}' : ''}',
+                          style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+                    ),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule, size: 18, color: Color(0xFFF55D2C)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Slot: ${widget.deliveryDate} (${widget.deliverySlot})',
+                            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 20),
             _sectionHeader('Choose Payment Method'),
-            _paymentOption('cod', 'Cash on Delivery', 'Pay when you receive', Icons.money, Colors.green),
-            _paymentOption('upi', 'UPI', 'Coming soon — Google Pay, PhonePe, Paytm', Icons.qr_code, Colors.purple),
-            _paymentOption('card', 'Credit / Debit Card', 'Coming soon — Visa, MasterCard, RuPay', Icons.credit_card, Colors.blue),
+            _paymentOption(
+              'cod',
+              'Cash on Delivery',
+              'Pay with CASH upon delivery. We encourage cashless Transactions.',
+              Icons.money,
+              Colors.green,
+            ),
+            _paymentOption(
+              'razorpay',
+              'UPI / Cards / NetBanking (Razorpay)',
+              'Pay securely via UPI (GPay, PhonePe, Paytm), Cards or NetBanking.',
+              Icons.credit_card,
+              const Color(0xFF3395FF),
+            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -174,8 +258,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Place Order',
-                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text(
+                      _selectedPayment == 'razorpay' ? 'Proceed to Pay' : 'Place Order',
+                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(width: 8),
                     Text('₹${widget.total.toStringAsFixed(0)}',
                         style: GoogleFonts.poppins(fontSize: 16)),
@@ -195,9 +281,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Widget _paymentOption(String value, String title, String subtitle, IconData icon, Color color) {
     final selected = _selectedPayment == value;
-    final comingSoon = value != 'cod';
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: selected ? const Color(0xFFF55D2C) : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: selected ? color : Colors.grey.shade100,
@@ -205,17 +297,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
         title: Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey)),
-        trailing: comingSoon
-            ? null
-            : Radio<String>(
-                value: value,
-                groupValue: _selectedPayment,
-                onChanged: (v) => setState(() => _selectedPayment = v!),
-                activeColor: const Color(0xFFF55D2C),
-              ),
-        onTap: comingSoon
-            ? () => showInfoToast(context, '$title will be available soon')
-            : () => setState(() => _selectedPayment = value),
+        trailing: Radio<String>(
+          value: value,
+          groupValue: _selectedPayment,
+          onChanged: (v) => setState(() => _selectedPayment = v!),
+          activeColor: const Color(0xFFF55D2C),
+        ),
+        onTap: () => setState(() => _selectedPayment = value),
       ),
     );
   }

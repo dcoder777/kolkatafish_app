@@ -35,3 +35,15 @@ local.properties
 *.perspectivev3
 xcuserdata
 Pods/
+
+# Scratch & Dev artifacts
+/device_*.png
+/crop_*.py
+/crop_*.png
+/*mascot*.png
+/fish_*.png
+/brand_launcher_*.png
+/cropped_logo_*.jpg
+/logo_wide.jpeg
+/full_fish_check.png
+/wati_logo.png

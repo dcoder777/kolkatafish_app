@@ -285,7 +285,7 @@ class StoreApiService {
       'postcode': postcode,
       'country': country,
       'phone': phone,
-      if (paymentMethod == 'cod') 'email': email,
+      'email': email,
     };
 
     final payload = {
