@@ -38,31 +38,35 @@ class HeroBanner extends StatelessWidget {
   Widget _caption() {
     return Container(
       color: const Color(0xFFDF8019),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'THE FINEST QUALITY',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.white70,
-              letterSpacing: 2,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'THE FINEST QUALITY',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.white70,
+                letterSpacing: 2,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Every Catch is a Promise of Freshness (Chemical Free)',
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.3,
+            const SizedBox(height: 6),
+            Text(
+              'Every Catch is a Promise of Freshness',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                height: 1.3,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

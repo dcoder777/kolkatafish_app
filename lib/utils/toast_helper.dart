@@ -24,13 +24,45 @@ void showSuccessToast(BuildContext context, String message) =>
     showAppToast(context, message, style: ToastStyle.success);
 
 void showErrorToast(BuildContext context, String message) =>
-    showAppToast(context, message, style: ToastStyle.error, duration: const Duration(seconds: 3));
+    showAppToast(context, message,
+        style: ToastStyle.error, duration: const Duration(seconds: 3));
 
 void showWarningToast(BuildContext context, String message) =>
     showAppToast(context, message, style: ToastStyle.warning);
 
 void showInfoToast(BuildContext context, String message) =>
     showAppToast(context, message, style: ToastStyle.info);
+
+/// Prominently alerts the user when internet connection is lost.
+/// Remains visible as long as the device is offline.
+void showOfflineToast(BuildContext context, {OverlayState? overlay}) {
+  ModernToast.show(
+    context,
+    overlay: overlay,
+    title: 'No Internet Connection',
+    message: 'You are offline. Features may be limited until reconnected.',
+    style: ToastStyle.error,
+    persistent: true,
+  );
+}
+
+/// Alerts the user when internet connectivity has been restored,
+/// automatically dismissing any prior offline notification.
+void showOnlineToast(BuildContext context, {OverlayState? overlay}) {
+  ModernToast.show(
+    context,
+    overlay: overlay,
+    title: 'Back Online',
+    message: 'Internet restored. Happy shopping!',
+    style: ToastStyle.success,
+    duration: const Duration(seconds: 3),
+  );
+}
+
+/// Closes any currently displayed toast (e.g. offline toast).
+void dismissCurrentToast() {
+  ModernToast.hide();
+}
 
 void showCartToast(
   BuildContext context,
@@ -66,7 +98,8 @@ Widget _fallbackIcon(bool added) {
     width: 40,
     height: 40,
     decoration: BoxDecoration(
-      color: (added ? const Color(0xFF4CAF50) : const Color(0xFF757575)).withValues(alpha: 0.15),
+      color: (added ? const Color(0xFF4CAF50) : const Color(0xFF757575))
+          .withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(8),
     ),
     child: Icon(

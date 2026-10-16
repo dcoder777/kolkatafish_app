@@ -2,21 +2,62 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/cart_provider.dart';
+import '../services/store_api_service.dart';
 import '../utils/toast_helper.dart';
 
-class OrderDetailsScreen extends StatelessWidget {
+class OrderDetailsScreen extends StatefulWidget {
   final PlacedOrder order;
 
   const OrderDetailsScreen({super.key, required this.order});
+
+  @override
+  State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
+}
+
+class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  PlacedOrder get order => widget.order;
+  bool _isRefreshing = false;
 
   String get _siteUrl {
     if (order.serverId != null && order.orderKey.isNotEmpty) {
       return 'https://kolkatafish.com/checkout/order-received/${order.serverId}/?key=${order.orderKey}';
     }
     return 'https://kolkatafish.com';
+  }
+
+  bool get _canQueryStatus =>
+      order.serverId != null && order.orderKey.isNotEmpty && order.billingEmail.isNotEmpty;
+
+  /// Ask the live store for this order's current status, then mirror it into
+  /// the locally stored record so every screen shows the same value.
+  Future<void> _refreshStatus() async {
+    if (!_canQueryStatus || _isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    try {
+      final status = await StoreApiService().fetchOrderStatus(
+        orderId: order.serverId!,
+        orderKey: order.orderKey,
+        billingEmail: order.billingEmail,
+      );
+      if (!mounted) return;
+      if (status.status.isEmpty) {
+        showErrorToast(context, 'The store did not return a status for this order.');
+        return;
+      }
+      context.read<CartProvider>().updateOrderStatus(order.id, status: status.status);
+      showSuccessToast(context, 'Order status updated to ${status.status.toUpperCase()}');
+      setState(() {});
+    } on StoreApiException catch (e) {
+      if (mounted) showErrorToast(context, e.message);
+    } catch (_) {
+      if (mounted) showErrorToast(context, 'Could not reach the store right now.');
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
   }
 
   String _receiptText() {
@@ -46,7 +87,12 @@ class OrderDetailsScreen extends StatelessWidget {
       }
     }
     b.writeln('Items total: Rs.${order.total.toStringAsFixed(0)}');
-    b.writeln('(includes Rs.50 delivery charged in app)');
+    b.writeln('(total as charged by kolkatafish.com,');
+    b.writeln(' including store delivery/handling fees)');
+    if (order.deliveryDate.isNotEmpty) {
+      b.writeln('');
+      b.writeln('Delivery slot: ${order.deliveryDate} (${order.deliverySlot})');
+    }
     b.writeln('');
     b.writeln('DELIVER TO');
     b.writeln('----------');
@@ -55,7 +101,7 @@ class OrderDetailsScreen extends StatelessWidget {
     if (order.address.isNotEmpty) b.writeln(order.address);
     b.writeln('');
     b.writeln('Thank you for ordering from KolkataFish!');
-    b.writeln('kolkatafish.com | +91 9830083112');
+    b.writeln('kolkatafish.com | +91 8348043021');
     return b.toString();
   }
 
@@ -80,6 +126,19 @@ class OrderDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Order Details', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        actions: [
+          if (_canQueryStatus)
+            IconButton(
+              tooltip: 'Refresh status from store',
+              onPressed: _isRefreshing ? null : _refreshStatus,
+              icon: _isRefreshing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF55D2C)))
+                  : const Icon(Icons.sync_outlined, color: Color(0xFFF55D2C)),
+            ),
+        ],
       ),
       body: ListView(
         physics: const BouncingScrollPhysics(),
@@ -98,26 +157,50 @@ class OrderDetailsScreen extends StatelessWidget {
                     children: [
                       Text(order.displayId,
                           style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: order.synced ? Colors.green.shade50 : Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: order.synced ? Colors.green.shade200 : Colors.orange.shade200),
-                        ),
-                        child: Text(
-                          order.synced
-                              ? order.status.toUpperCase()
-                              : 'NOT SYNCED',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: order.synced
-                                  ? Colors.green.shade800
-                                  : Colors.orange.shade900),
-                        ),
-                      ),
+                      Builder(builder: (_) {
+                        final awaiting = order.isAwaitingPayment;
+                        final failed = order.status == 'failed' ||
+                            order.status == 'cancelled' ||
+                            order.status == 'refunded';
+                        final Color bg;
+                        final Color border;
+                        final Color fg;
+                        final String label;
+                        if (!order.synced) {
+                          bg = Colors.orange.shade50;
+                          border = Colors.orange.shade200;
+                          fg = Colors.orange.shade900;
+                          label = 'NOT SYNCED';
+                        } else if (awaiting) {
+                          bg = Colors.orange.shade50;
+                          border = Colors.orange.shade200;
+                          fg = Colors.orange.shade900;
+                          label = 'AWAITING PAYMENT';
+                        } else if (failed) {
+                          bg = Colors.red.shade50;
+                          border = Colors.red.shade200;
+                          fg = Colors.red.shade800;
+                          label = order.status.toUpperCase();
+                        } else {
+                          bg = Colors.green.shade50;
+                          border = Colors.green.shade200;
+                          fg = Colors.green.shade800;
+                          label = order.status.toUpperCase();
+                        }
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: border),
+                          ),
+                          child: Text(
+                            label,
+                            style: GoogleFonts.poppins(
+                                fontSize: 11, fontWeight: FontWeight.w700, color: fg),
+                          ),
+                        );
+                      }),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -127,6 +210,9 @@ class OrderDetailsScreen extends StatelessWidget {
                       'Placed on',
                       '${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year} '
                           '${order.placedAt.hour}:${order.placedAt.minute.toString().padLeft(2, '0')}'),
+                  if (order.deliveryDate.isNotEmpty)
+                    _infoRow(Icons.schedule, 'Delivery slot',
+                        '${order.deliveryDate} (${order.deliverySlot})'),
                   if (order.customerName.isNotEmpty)
                     _infoRow(Icons.person_outline, 'Customer', order.customerName),
                   if (order.phone.isNotEmpty)

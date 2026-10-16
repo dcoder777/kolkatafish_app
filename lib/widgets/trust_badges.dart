@@ -18,10 +18,14 @@ class TrustBadges extends StatelessWidget {
             runSpacing: 16,
             alignment: WrapAlignment.center,
             children: [
-              _badge(theme, Icons.local_shipping, 'Free Delivery', 'For orders above ₹1000'),
-              _badge(theme, Icons.verified, 'Guarantee Fresh', '100% Fresh, No Chemicals'),
-              _badge(theme, Icons.lock, 'Secure Payment', '100% Secure Checkout'),
-              _badge(theme, Icons.headset_mic, '24/7 Support', 'Always there for you'),
+              _badge(theme, Icons.local_shipping, 'Free Delivery',
+                  'For all orders above ₹799'),
+              _badge(theme, Icons.verified, 'Guaranteed Fresh',
+                  'We do not stock products, FSSAI approved'),
+              _badge(
+                  theme, Icons.lock, 'Secure Payment', '100% secure payment'),
+              _badge(theme, Icons.headset_mic, '24/7 Support',
+                  'Dedicated support'),
             ],
           ),
         ],

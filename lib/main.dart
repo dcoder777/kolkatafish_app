@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'providers/app_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'screens/splash_screen.dart';
+import 'widgets/connectivity_listener.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AppProvider()..init()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: const KolkataFishApp(),
     ),
@@ -21,11 +22,14 @@ void main() {
 }
 
 class KolkataFishApp extends StatelessWidget {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   const KolkataFishApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'KolkataFish',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -50,6 +54,12 @@ class KolkataFishApp extends StatelessWidget {
           ),
         ),
       ),
+      builder: (context, child) {
+        return ConnectivityListener(
+          navigatorKey: navigatorKey,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const SplashScreen(),
     );
   }

@@ -123,7 +123,7 @@ class AboutTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _featureItem(Icons.verified, '100% Fresh Water Products'),
-                _featureItem(Icons.science, '0% Chemicals'),
+                _featureItem(Icons.science, '0% Storage'),
                 _featureItem(Icons.local_shipping, 'Home Delivery'),
                 _featureItem(Icons.support_agent, '24/7 Customer Support'),
                 _featureItem(Icons.lock, 'Secure Payments'),

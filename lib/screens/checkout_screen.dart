@@ -79,7 +79,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   List<String> _getAvailableSlots(DateTime date) {
     final now = DateTime.now();
-    final isToday = (date.year == now.year && date.month == now.month && date.day == now.day);
+    final isToday = (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day);
     final hour = now.hour;
 
     final allSlots = <String>[
@@ -111,7 +113,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate.isBefore(firstDate) ? firstDate : _selectedDate,
+      initialDate:
+          _selectedDate.isBefore(firstDate) ? firstDate : _selectedDate,
       firstDate: firstDate,
       lastDate: lastDate,
       builder: (context, child) {
@@ -139,15 +142,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  void _onContinueToPayment(double total) {
+  void _onContinueToPayment() {
     if (!_formKey.currentState!.validate()) {
       showErrorToast(context, 'Please complete all required fields.');
       return;
     }
 
+    final cart = context.read<CartProvider>();
+    if (cart.hasFallbackItems) {
+      showErrorToast(
+        context,
+        'Some items were loaded offline and cannot be ordered. '
+        'Please remove them or reconnect and try again.',
+      );
+      return;
+    }
+
     final slots = _getAvailableSlots(_selectedDate);
     if (slots.isEmpty) {
-      showErrorToast(context, 'No delivery slots available for today. Please select tomorrow.');
+      showErrorToast(context,
+          'No delivery slots available for today. Please select tomorrow.');
       return;
     }
 
@@ -160,7 +174,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => PaymentScreen(
-          total: total,
           customerName: _nameCtrl.text.trim(),
           customerEmail: _emailCtrl.text.trim(),
           phone: _phoneCtrl.text.trim(),
@@ -178,20 +191,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
-    final deliveryFee = 50.0;
-    final total = cart.cartTotal + deliveryFee;
+    final subtotal = cart.cartTotal;
     final availableSlots = _getAvailableSlots(_selectedDate);
 
     // Auto-select first slot if none selected or invalid
     if (_selectedSlot == null && availableSlots.isNotEmpty) {
       _selectedSlot = availableSlots.first;
-    } else if (_selectedSlot != null && !availableSlots.contains(_selectedSlot)) {
+    } else if (_selectedSlot != null &&
+        !availableSlots.contains(_selectedSlot)) {
       _selectedSlot = availableSlots.isNotEmpty ? availableSlots.first : null;
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Checkout', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text('Checkout',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -209,21 +223,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         decoration: BoxDecoration(
                           color: Colors.orange.shade50,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFF55D2C).withValues(alpha: 0.3)),
+                          border: Border.all(
+                              color: const Color(0xFFF55D2C)
+                                  .withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.person_outline, color: Color(0xFFF55D2C)),
+                            const Icon(Icons.person_outline,
+                                color: Color(0xFFF55D2C)),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text('Guest Checkout',
-                                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13)),
                                   const SizedBox(height: 2),
                                   Text('${auth.userName} • ${auth.userPhone}',
-                                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700)),
                                 ],
                               ),
                             ),
@@ -232,25 +253,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       )
                     : const SizedBox.shrink(),
               ),
-
               _sectionHeader('Delivery Schedule'),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF55D2C).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'Your chosen date and slot are sent to the store as a request. '
+                        'The store confirms the final delivery time by phone.',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            color: Colors.grey.shade700,
+                            height: 1.4),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     // Delivery Date Picker Card
                     InkWell(
                       onTap: _pickDate,
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 14),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today_outlined, color: Color(0xFFF55D2C)),
+                            const Icon(Icons.calendar_today_outlined,
+                                color: Color(0xFFF55D2C)),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -258,17 +298,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 children: [
                                   Text(
                                     'Delivery Date *',
-                                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     _formatDate(_selectedDate),
-                                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                            const Icon(Icons.arrow_drop_down,
+                                color: Colors.grey),
                           ],
                         ),
                       ),
@@ -277,27 +322,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                     // Delivery Slot Dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedSlot,
+                      initialValue: _selectedSlot,
                       isExpanded: true,
                       decoration: InputDecoration(
                         labelText: 'Delivery Slot *',
-                        prefixIcon: const Icon(Icons.access_time_outlined, color: Color(0xFFF55D2C)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                        prefixIcon: const Icon(Icons.access_time_outlined,
+                            color: Color(0xFFF55D2C)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 12),
                       ),
                       items: availableSlots.isNotEmpty
                           ? availableSlots
                               .map((slot) => DropdownMenuItem(
                                     value: slot,
-                                    child: Text(slot, style: GoogleFonts.poppins(fontSize: 14)),
+                                    child: Text(slot,
+                                        style:
+                                            GoogleFonts.poppins(fontSize: 14)),
                                   ))
                               .toList()
                           : [
                               DropdownMenuItem(
                                 value: null,
                                 enabled: false,
-                                child: Text('No slots available today (Select tomorrow)',
-                                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.red)),
+                                child: Text(
+                                    'No slots available today (Select tomorrow)',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 12, color: Colors.red)),
                               ),
                             ],
                       onChanged: availableSlots.isNotEmpty
@@ -313,7 +365,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
               _sectionHeader('Delivery Address'),
               Padding(
@@ -325,7 +376,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ctrl: _nameCtrl,
                       icon: Icons.person_outlined,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Enter full name';
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Enter full name';
+                        }
                         if (v.trim().length < 2) return 'Enter a valid name';
                         return null;
                       },
@@ -337,8 +390,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       icon: Icons.email_outlined,
                       type: TextInputType.emailAddress,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Enter email address';
-                        final emailRegex = RegExp(r'^[\w\.\-]+@[\w\-]+\.[\w\.\-]+$');
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Enter email address';
+                        }
+                        final emailRegex =
+                            RegExp(r'^[\w\.\-]+@[\w\-]+\.[\w\.\-]+$');
                         if (!emailRegex.hasMatch(v.trim())) {
                           return 'Enter a valid email address';
                         }
@@ -352,9 +408,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       icon: Icons.phone_outlined,
                       type: TextInputType.phone,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Enter phone number';
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Enter phone number';
+                        }
                         final clean = v.replaceAll(RegExp(r'\D'), '');
-                        if (clean.length < 10) return 'Enter valid 10-digit mobile number';
+                        if (clean.length < 10) {
+                          return 'Enter valid 10-digit mobile number';
+                        }
                         return null;
                       },
                     ),
@@ -373,7 +433,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       icon: Icons.home_outlined,
                       maxLines: 2,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Enter delivery address';
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Enter delivery address';
+                        }
                         if (v.trim().length < 5) return 'Address too short';
                         return null;
                       },
@@ -387,7 +449,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             label: 'City *',
                             ctrl: _cityCtrl,
                             icon: Icons.location_city_outlined,
-                            validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter city' : null,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Enter city'
+                                : null,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -398,9 +462,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             icon: Icons.pin_outlined,
                             type: TextInputType.number,
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Enter pincode';
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Enter pincode';
+                              }
                               final clean = v.replaceAll(RegExp(r'\D'), '');
-                              if (clean.length != 6) return 'Enter 6-digit pincode';
+                              if (clean.length != 6) {
+                                return 'Enter 6-digit pincode';
+                              }
                               return null;
                             },
                           ),
@@ -410,27 +478,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
               _sectionHeader('Order Summary'),
               ...cart.cartItems.map((item) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(item.name, style: GoogleFonts.poppins(fontSize: 13)),
+                          child: Text(item.name,
+                              style: GoogleFonts.poppins(fontSize: 13)),
                         ),
                         Text('${item.weight} × ${item.formattedPrice}',
-                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500)),
+                            style: GoogleFonts.poppins(
+                                fontSize: 13, fontWeight: FontWeight.w500)),
                       ],
                     ),
                   )),
               const SizedBox(height: 8),
               Divider(indent: 16, endIndent: 16, color: Colors.grey.shade300),
-              _priceRow('Subtotal', '₹${cart.cartTotal.toStringAsFixed(0)}'),
-              _priceRow('Delivery', '₹$deliveryFee'),
+              _priceRow('Subtotal', '₹${subtotal.toStringAsFixed(0)}'),
+              _priceRow('Delivery & handling', 'Calculated at payment'),
               Divider(indent: 16, endIndent: 16, color: Colors.grey.shade300),
-              _priceRow('Total', '₹${total.toStringAsFixed(0)}', bold: true),
+              _priceRow('Subtotal payable', '₹${subtotal.toStringAsFixed(0)}',
+                  bold: true),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(
+                  'Delivery charge and any handling fees are added by the '
+                  'kolkatafish.com store based on your address and shown on '
+                  'the next screen before you pay.',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ),
               const SizedBox(height: 24),
             ],
           ),
@@ -449,20 +531,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         ),
         child: ElevatedButton(
-          onPressed: () => _onContinueToPayment(total),
+          onPressed: _onContinueToPayment,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFF55D2C),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('₹${total.toStringAsFixed(0)}',
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text('Continue to Payment',
+                  style: GoogleFonts.poppins(fontSize: 16)),
               const SizedBox(width: 8),
-              Text('Continue to Payment', style: GoogleFonts.poppins(fontSize: 16)),
+              const Icon(Icons.arrow_forward, size: 18),
             ],
           ),
         ),
@@ -473,7 +556,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _sectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Text(title, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+      child: Text(title,
+          style:
+              GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -495,7 +580,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         labelText: label,
         prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       ),
     );
   }
@@ -508,7 +594,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           Text(label,
               style: GoogleFonts.poppins(
-                  fontSize: 14, fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+                  fontSize: 14,
+                  fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
           Text(value,
               style: GoogleFonts.poppins(
                   fontSize: 14,

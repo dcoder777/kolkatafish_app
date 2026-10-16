@@ -3,8 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
+import '../services/store_api_service.dart';
 import '../utils/toast_helper.dart';
 import 'contact_tab.dart';
+import 'forgot_password_screen.dart';
 import 'order_details_screen.dart';
 import 'policy_screen.dart';
 
@@ -18,10 +20,6 @@ class ProfileTab extends StatelessWidget {
     return _buildLoggedIn(context);
   }
 
-  void _doLogin(BuildContext context, String name, String email) {
-    context.read<AuthProvider>().login(name, email);
-  }
-
   void _doLogout(BuildContext context) {
     context.read<AuthProvider>().logout();
   }
@@ -29,123 +27,164 @@ class ProfileTab extends StatelessWidget {
   void _showLoginDialog(BuildContext context) {
     final emailCtrl = TextEditingController();
     final passCtrl = TextEditingController();
+    bool isLoading = false;
+    String? errorMessage;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(children: [
-          const Icon(Icons.set_meal, color: Color(0xFFF55D2C)),
-          const SizedBox(width: 8),
-          Text('Login', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        ]),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: emailCtrl,
-              decoration: InputDecoration(
-                labelText: 'Email', prefixIcon: const Icon(Icons.email_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(children: [
+              const Icon(Icons.set_meal, color: Color(0xFFF55D2C)),
+              const SizedBox(width: 8),
+              Text('Login', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            ]),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Enter your KolkataFish WooCommerce email and password.',
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailCtrl,
+                  enabled: !isLoading,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: passCtrl,
+                  obscureText: true,
+                  enabled: !isLoading,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outlined),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            errorMessage!,
+                            style: GoogleFonts.poppins(color: Colors.red.shade800, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            final typedEmail = emailCtrl.text.trim();
+                            Navigator.pop(ctx);
+                            final updated = await Navigator.push<bool>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ForgotPasswordScreen(initialEmail: typedEmail),
+                              ),
+                            );
+                            if (updated == true && context.mounted) {
+                              _showLoginDialog(context);
+                            }
+                          },
+                    child: Text('Forgot Password?',
+                        style: GoogleFonts.poppins(color: const Color(0xFFF55D2C), fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.pop(ctx),
+                child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passCtrl, obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password', prefixIcon: const Icon(Icons.lock_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _showForgotPasswordDialog(context);
-                },
-                child: Text('Forgot Password?',
-                    style: GoogleFonts.poppins(color: const Color(0xFFF55D2C), fontSize: 12)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final email = emailCtrl.text.trim();
-              if (email.isEmpty || !email.contains('@')) {
-                Navigator.pop(ctx);
-                showErrorToast(context, 'Please enter a valid email');
-                return;
-              }
-              if (passCtrl.text.isEmpty) {
-                Navigator.pop(ctx);
-                showErrorToast(context, 'Please enter your password');
-                return;
-              }
-              Navigator.pop(ctx);
-              _doLogin(context, AuthProvider.nameFromEmail(email), email);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text('Login', style: GoogleFonts.poppins()),
-          ),
-        ],
-      ),
-    );
-  }
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final email = emailCtrl.text.trim();
+                        final pass = passCtrl.text;
+                        if (email.isEmpty || !email.contains('@')) {
+                          setDialogState(() => errorMessage = 'Please enter a valid email address');
+                          return;
+                        }
+                        if (pass.isEmpty) {
+                          setDialogState(() => errorMessage = 'Please enter your password');
+                          return;
+                        }
 
-  void _showForgotPasswordDialog(BuildContext context) {
-    final emailCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(children: [
-          const Icon(Icons.lock_reset, color: Color(0xFFF55D2C)),
-          const SizedBox(width: 8),
-          Text('Reset Password', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        ]),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Enter your email and we\'ll send you a reset link.',
-                style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailCtrl,
-              decoration: InputDecoration(
-                labelText: 'Email', prefixIcon: const Icon(Icons.email_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        setDialogState(() {
+                          isLoading = true;
+                          errorMessage = null;
+                        });
+
+                        final auth = context.read<AuthProvider>();
+                        final result = await auth.loginWithCredentials(
+                          email: email,
+                          password: pass,
+                        );
+
+                        if (!dialogCtx.mounted) return;
+
+                        if (result.success) {
+                          Navigator.pop(ctx);
+                          showSuccessToast(context, 'Logged in as ${auth.userName}');
+                        } else {
+                          setDialogState(() {
+                            isLoading = false;
+                            errorMessage = result.message;
+                          });
+                          showErrorToast(context, result.message);
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF55D2C),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text('Login', style: GoogleFonts.poppins()),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              showSuccessToast(context, 'Password reset link sent to ${emailCtrl.text}');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text('Send Link', style: GoogleFonts.poppins()),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -156,102 +195,174 @@ class ProfileTab extends StatelessWidget {
     final phoneCtrl = TextEditingController();
     final passCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
+    bool isLoading = false;
+    String? errorMessage;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(children: [
-          const Icon(Icons.person_add, color: Color(0xFFF55D2C)),
-          const SizedBox(width: 8),
-          Text('Register', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        ]),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Full Name', prefixIcon: const Icon(Icons.person_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(children: [
+              const Icon(Icons.person_add, color: Color(0xFFF55D2C)),
+              const SizedBox(width: 8),
+              Text('Register', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            ]),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Create a real account on kolkatafish.com.',
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nameCtrl,
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
+                      labelText: 'Full Name', prefixIcon: const Icon(Icons.person_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: emailCtrl,
+                    enabled: !isLoading,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email', prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: phoneCtrl, keyboardType: TextInputType.phone,
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number', prefixIcon: const Icon(Icons.phone_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: passCtrl, obscureText: true,
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
+                      labelText: 'Password (min 8 characters)',
+                      prefixIcon: const Icon(Icons.lock_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: confirmCtrl, obscureText: true,
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm Password', prefixIcon: const Icon(Icons.lock_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              errorMessage!,
+                              style: GoogleFonts.poppins(color: Colors.red.shade800, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: emailCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Email', prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.pop(ctx),
+                child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: phoneCtrl, keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number', prefixIcon: const Icon(Icons.phone_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final name = nameCtrl.text.trim();
+                        final email = emailCtrl.text.trim();
+                        final phone = phoneCtrl.text.trim();
+                        if (name.isEmpty) {
+                          setDialogState(() => errorMessage = 'Please enter your full name');
+                          return;
+                        }
+                        if (email.isEmpty || !email.contains('@')) {
+                          setDialogState(() => errorMessage = 'Please enter a valid email');
+                          return;
+                        }
+                        if (phone.isEmpty) {
+                          setDialogState(() => errorMessage = 'Please enter your phone number');
+                          return;
+                        }
+                        if (passCtrl.text.length < 8) {
+                          setDialogState(() => errorMessage = 'Password must be at least 8 characters');
+                          return;
+                        }
+                        if (passCtrl.text != confirmCtrl.text) {
+                          setDialogState(() => errorMessage = 'Passwords do not match');
+                          return;
+                        }
+
+                        setDialogState(() {
+                          isLoading = true;
+                          errorMessage = null;
+                        });
+
+                        final auth = context.read<AuthProvider>();
+                        final result = await auth.register(
+                          name: name,
+                          email: email,
+                          phone: phone,
+                          password: passCtrl.text,
+                        );
+
+                        if (!dialogCtx.mounted) return;
+
+                        if (result.success) {
+                          Navigator.pop(ctx);
+                          showSuccessToast(context, 'Welcome, ${auth.userName}! Account created.');
+                        } else {
+                          setDialogState(() {
+                            isLoading = false;
+                            errorMessage = result.message;
+                          });
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: passCtrl, obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password', prefixIcon: const Icon(Icons.lock_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmCtrl, obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Confirm Password', prefixIcon: const Icon(Icons.lock_outlined),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text('Register', style: GoogleFonts.poppins()),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameCtrl.text.trim();
-              final email = emailCtrl.text.trim();
-              if (name.isEmpty) {
-                Navigator.pop(ctx);
-                showErrorToast(context, 'Please enter your full name');
-                return;
-              }
-              if (email.isEmpty || !email.contains('@')) {
-                Navigator.pop(ctx);
-                showErrorToast(context, 'Please enter a valid email');
-                return;
-              }
-              if (passCtrl.text.length < 6) {
-                Navigator.pop(ctx);
-                showErrorToast(context, 'Password must be at least 6 characters');
-                return;
-              }
-              if (passCtrl.text != confirmCtrl.text) {
-                Navigator.pop(ctx);
-                showErrorToast(context, 'Passwords do not match');
-                return;
-              }
-              Navigator.pop(ctx);
-              _doLogin(context, name, email);
-              showSuccessToast(context, 'Welcome, $name! Account created.');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text('Register', style: GoogleFonts.poppins()),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -296,7 +407,7 @@ class ProfileTab extends StatelessWidget {
                               color: Colors.orange.shade100,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.set_meal, color: const Color(0xFFF55D2C)),
+                            child: const Icon(Icons.set_meal, color: Color(0xFFF55D2C)),
                           ),
                           title: Text(item.name,
                               style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
@@ -320,61 +431,121 @@ class ProfileTab extends StatelessWidget {
     final auth = context.read<AuthProvider>();
     final nameCtrl = TextEditingController(text: auth.userName);
     final phoneCtrl = TextEditingController(text: auth.userPhone);
+    bool isLoading = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(children: [
-          const Icon(Icons.edit_outlined, color: Color(0xFFF55D2C)),
-          const SizedBox(width: 8),
-          Text('Edit Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        ]),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: InputDecoration(
-                labelText: 'Full Name', prefixIcon: const Icon(Icons.person_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(children: [
+            const Icon(Icons.edit_outlined, color: Color(0xFFF55D2C)),
+            const SizedBox(width: 8),
+            Text('Edit Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          ]),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                enabled: !isLoading,
+                decoration: InputDecoration(
+                  labelText: 'Full Name', prefixIcon: const Icon(Icons.person_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneCtrl, keyboardType: TextInputType.phone,
+                enabled: !isLoading,
+                decoration: InputDecoration(
+                  labelText: 'Phone Number', prefixIcon: const Icon(Icons.phone_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(ctx),
+              child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: phoneCtrl, keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Phone Number', prefixIcon: const Icon(Icons.phone_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ElevatedButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      final name = nameCtrl.text.trim();
+                      if (name.isEmpty) {
+                        showErrorToast(context, 'Name cannot be empty');
+                        return;
+                      }
+                      setDialogState(() => isLoading = true);
+                      final result = await auth.updateProfileOnServer(
+                        name: name,
+                        phone: phoneCtrl.text.trim(),
+                      );
+                      if (!dialogCtx.mounted) return;
+                      Navigator.pop(ctx);
+                      if (result.success) {
+                        showSuccessToast(context, 'Profile updated');
+                      } else {
+                        showErrorToast(context, result.message);
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 18, height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text('Save', style: GoogleFonts.poppins()),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameCtrl.text.trim();
-              if (name.isEmpty) {
-                showErrorToast(context, 'Name cannot be empty');
-                return;
-              }
-              auth.updateProfile(name: name, phone: phoneCtrl.text);
-              Navigator.pop(ctx);
-              showSuccessToast(context, 'Profile updated');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF55D2C), foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text('Save', style: GoogleFonts.poppins()),
-          ),
-        ],
       ),
     );
+  }
+
+  /// Pull the live status for every order the store can identify
+  /// (needs serverId + orderKey + billingEmail).
+  Future<void> _refreshOrderStatuses(BuildContext context) async {
+    final cart = context.read<CartProvider>();
+    final service = StoreApiService();
+    final updatable = cart.orders
+        .where((o) =>
+            o.serverId != null && o.orderKey.isNotEmpty && o.billingEmail.isNotEmpty)
+        .toList();
+
+    if (updatable.isEmpty) {
+      showInfoToast(context, 'No orders can be refreshed from the store yet.');
+      return;
+    }
+
+    int updated = 0;
+    for (final order in updatable) {
+      try {
+        final status = await service.fetchOrderStatus(
+          orderId: order.serverId!,
+          orderKey: order.orderKey,
+          billingEmail: order.billingEmail,
+        );
+        if (status.status.isNotEmpty && status.status != order.status) {
+          cart.updateOrderStatus(order.id, status: status.status);
+          updated++;
+        }
+      } catch (_) {
+        // Keep going; other orders may still refresh.
+      }
+    }
+
+    if (!context.mounted) return;
+    if (updated > 0) {
+      showSuccessToast(context, '$updated order${updated == 1 ? '' : 's'} updated');
+    } else {
+      showInfoToast(context, 'All orders are already up to date.');
+    }
   }
 
   void _showOrdersSheet(BuildContext context) {
@@ -408,49 +579,62 @@ class ProfileTab extends StatelessWidget {
                         style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: orders.length,
-                      itemBuilder: (_, i) {
-                        final order = orders[i];
-                        return ListTile(
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => OrderDetailsScreen(order: order)));
-                          },
-                          leading: Container(
-                            width: 48, height: 48,
-                            decoration: BoxDecoration(
-                              color: order.synced
-                                  ? Colors.green.shade50
-                                  : Colors.orange.shade50,
-                              borderRadius: BorderRadius.circular(8),
+                    child: RefreshIndicator(
+                      onRefresh: () => _refreshOrderStatuses(context),
+                      child: ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: orders.length,
+                        itemBuilder: (_, i) {
+                          final order = orders[i];
+                          final awaiting = order.isAwaitingPayment;
+                          final failed = order.status == 'failed' ||
+                              order.status == 'cancelled' ||
+                              order.status == 'refunded';
+                          return ListTile(
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => OrderDetailsScreen(order: order)));
+                            },
+                            leading: Container(
+                              width: 48, height: 48,
+                              decoration: BoxDecoration(
+                                color: awaiting || failed || !order.synced
+                                    ? Colors.orange.shade50
+                                    : Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                  awaiting
+                                      ? Icons.hourglass_top_outlined
+                                      : failed
+                                          ? Icons.error_outline
+                                          : order.synced
+                                              ? Icons.check_circle_outline
+                                              : Icons.cloud_off_outlined,
+                                  color: awaiting || failed || !order.synced
+                                      ? Colors.orange.shade800
+                                      : Colors.green.shade600),
                             ),
-                            child: Icon(
-                                order.synced
-                                    ? Icons.check_circle_outline
-                                    : Icons.cloud_off_outlined,
-                                color: order.synced
-                                    ? Colors.green.shade600
-                                    : Colors.orange.shade800),
-                          ),
-                          title: Text(order.displayId,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14, fontWeight: FontWeight.w600)),
-                          subtitle: Text(
-                              '${order.payment} • ${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year}'
-                              '${order.synced ? '' : ' • not synced'}',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12, color: Colors.grey.shade600)),
-                          trailing: Text('₹${order.total.toStringAsFixed(0)}',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFFF55D2C))),
-                        );
-                      },
+                            title: Text(order.displayId,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14, fontWeight: FontWeight.w600)),
+                            subtitle: Text(
+                                '${order.payment} • ${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year}'
+                                '${awaiting ? ' • awaiting payment' : ''}'
+                                '${order.synced || awaiting ? '' : ' • not synced'}',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey.shade600)),
+                            trailing: Text('₹${order.total.toStringAsFixed(0)}',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFFF55D2C))),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ]),
@@ -546,8 +730,31 @@ class ProfileTab extends StatelessWidget {
         Center(child: Text(displayName,
             style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold))),
         const SizedBox(height: 4),
-        Center(child: Text(displayEmail,
-            style: GoogleFonts.poppins(color: Colors.grey, fontSize: 14))),
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.email_outlined, size: 14, color: Colors.grey.shade500),
+              const SizedBox(width: 5),
+              Text(displayEmail,
+                  style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 13)),
+            ],
+          ),
+        ),
+        if (auth.userPhone.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.phone_outlined, size: 14, color: Colors.grey.shade500),
+                const SizedBox(width: 5),
+                Text(auth.userPhone,
+                    style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 13)),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

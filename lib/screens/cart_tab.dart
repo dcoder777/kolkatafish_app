@@ -7,6 +7,7 @@ import '../utils/toast_helper.dart';
 import '../widgets/app_network_image.dart';
 import 'product_detail_screen.dart';
 import 'checkout_screen.dart';
+import 'forgot_password_screen.dart';
 
 class CartTab extends StatelessWidget {
   const CartTab({super.key});
@@ -153,10 +154,13 @@ void _showAuthRequiredDialog(BuildContext context) {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
   bool isLoginTab = true;
+  bool isAuthenticating = false;
+  String? authError;
 
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    isDismissible: !isAuthenticating,
     shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
     builder: (ctx) {
@@ -178,7 +182,7 @@ void _showAuthRequiredDialog(BuildContext context) {
                         borderRadius: BorderRadius.circular(2)),
                   ),
                   const SizedBox(height: 16),
-                  Icon(Icons.lock_outlined, size: 48, color: const Color(0xFFF55D2C)),
+                  const Icon(Icons.lock_outlined, size: 48, color: Color(0xFFF55D2C)),
                   const SizedBox(height: 8),
                   Text(
                     isLoginTab ? 'Login to Continue' : 'Create an Account',
@@ -187,8 +191,8 @@ void _showAuthRequiredDialog(BuildContext context) {
                   const SizedBox(height: 4),
                   Text(
                     isLoginTab
-                        ? 'Login to place your order and track deliveries'
-                        : 'Register to enjoy faster checkout',
+                        ? 'Login with your KolkataFish WooCommerce credentials'
+                        : 'Register on kolkatafish.com or checkout as guest',
                     style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
@@ -196,6 +200,7 @@ void _showAuthRequiredDialog(BuildContext context) {
                   if (!isLoginTab)
                     TextField(
                       controller: nameCtrl,
+                      enabled: !isAuthenticating,
                       decoration: InputDecoration(
                         labelText: 'Full Name',
                         prefixIcon: const Icon(Icons.person_outlined),
@@ -205,6 +210,7 @@ void _showAuthRequiredDialog(BuildContext context) {
                   if (!isLoginTab) const SizedBox(height: 10),
                   TextField(
                     controller: emailCtrl,
+                    enabled: !isAuthenticating,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
@@ -215,6 +221,7 @@ void _showAuthRequiredDialog(BuildContext context) {
                   const SizedBox(height: 10),
                   TextField(
                     controller: passCtrl,
+                    enabled: !isAuthenticating,
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -222,50 +229,141 @@ void _showAuthRequiredDialog(BuildContext context) {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
+                  if (isLoginTab)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: isAuthenticating
+                            ? null
+                            : () async {
+                                final typedEmail = emailCtrl.text.trim();
+                                Navigator.pop(ctx);
+                                final updated = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ForgotPasswordScreen(initialEmail: typedEmail),
+                                  ),
+                                );
+                                if (updated == true && context.mounted) {
+                                  _showAuthRequiredDialog(context);
+                                }
+                              },
+                        child: Text('Forgot Password?',
+                            style: GoogleFonts.poppins(color: const Color(0xFFF55D2C), fontSize: 12)),
+                      ),
+                    ),
+                  if (authError != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              authError!,
+                              style: GoogleFonts.poppins(color: Colors.red.shade800, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        final email = emailCtrl.text.trim();
-                        if (email.isEmpty || !email.contains('@')) {
-                          showErrorToast(context, 'Please enter a valid email');
-                          return;
-                        }
-                        if (passCtrl.text.isEmpty) {
-                          showErrorToast(context, 'Please enter your password');
-                          return;
-                        }
-                        if (!isLoginTab && nameCtrl.text.trim().isEmpty) {
-                          showErrorToast(context, 'Please enter your full name');
-                          return;
-                        }
-                        final name = isLoginTab
-                            ? AuthProvider.nameFromEmail(email)
-                            : nameCtrl.text.trim();
-                        auth.login(name, email);
-                        Navigator.pop(ctx);
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (_) => const CheckoutScreen()));
-                      },
+                      onPressed: isAuthenticating
+                          ? null
+                          : () async {
+                              final email = emailCtrl.text.trim();
+                              final pass = passCtrl.text;
+                              if (email.isEmpty || !email.contains('@')) {
+                                setSheetState(() => authError = 'Please enter a valid email');
+                                showErrorToast(context, 'Please enter a valid email');
+                                return;
+                              }
+                              if (pass.isEmpty) {
+                                setSheetState(() => authError = 'Please enter your password');
+                                showErrorToast(context, 'Please enter your password');
+                                return;
+                              }
+
+                              if (isLoginTab) {
+                                setSheetState(() {
+                                  isAuthenticating = true;
+                                  authError = null;
+                                });
+
+                                final result = await auth.loginWithCredentials(
+                                  email: email,
+                                  password: pass,
+                                );
+
+                                if (!ctx.mounted) return;
+
+                                if (result.success) {
+                                  Navigator.pop(ctx);
+                                  showSuccessToast(context, 'Welcome back, ${auth.userName}!');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                                  );
+                                } else {
+                                  setSheetState(() {
+                                    isAuthenticating = false;
+                                    authError = result.message;
+                                  });
+                                  showErrorToast(context, result.message);
+                                }
+                              } else {
+                                // For registration, note that accounts are on WooCommerce,
+                                // or user can checkout directly as guest
+                                setSheetState(() {
+                                  authError = 'Please login with your existing account, or use "Continue as Guest" below.';
+                                });
+                                showErrorToast(context, 'Please use Continue as Guest or login with your account.');
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFF55D2C),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: Text(
-                        isLoginTab ? 'Login' : 'Register',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
+                      child: isAuthenticating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              isLoginTab ? 'Login & Continue' : 'Register',
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 10),
                   TextButton(
-                    onPressed: () => setSheetState(() => isLoginTab = !isLoginTab),
+                    onPressed: isAuthenticating
+                        ? null
+                        : () => setSheetState(() {
+                              isLoginTab = !isLoginTab;
+                              authError = null;
+                            }),
                     child: Text(
                       isLoginTab
-                          ? "Don't have an account? Register"
+                          ? "Don't have an account? Register / Guest info"
                           : 'Already have an account? Login',
                       style: GoogleFonts.poppins(fontSize: 13),
                     ),
@@ -293,7 +391,7 @@ void _showAuthRequiredDialog(BuildContext context) {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.person_outline, size: 18, color: const Color(0xFFF55D2C)),
+                          const Icon(Icons.person_outline, size: 18, color: Color(0xFFF55D2C)),
                           const SizedBox(width: 8),
                           Text('Continue as Guest',
                               style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFFF55D2C))),
@@ -323,7 +421,7 @@ void _showGuestCheckoutDialog(BuildContext context) {
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(children: [
-        Icon(Icons.person_outline, color: const Color(0xFFF55D2C)),
+        const Icon(Icons.person_outline, color: Color(0xFFF55D2C)),
         const SizedBox(width: 8),
         Text('Guest Checkout', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
       ]),

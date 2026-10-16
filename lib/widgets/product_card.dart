@@ -49,22 +49,36 @@ class ProductCard extends StatelessWidget {
                   ),
                   if (product.isSale)
                     Positioned(
-                      top: 4, left: 4,
+                      top: 4,
+                      left: 4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4)),
                         child: Text('Sale',
-                            style: GoogleFonts.poppins(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                            style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
                   if (product.isNew)
                     Positioned(
-                      top: 4, left: 4,
+                      top: 4,
+                      left: 4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(4)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(4)),
                         child: Text('New',
-                            style: GoogleFonts.poppins(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                            style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
                 ],
@@ -76,25 +90,41 @@ class ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(product.name,
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
-                      maxLines: 2, overflow: TextOverflow.ellipsis),
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
-                  Text(product.weight, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey)),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    Icon(Icons.star, color: Colors.amber, size: 12),
-                    const SizedBox(width: 2),
-                    Text(product.rating.toString(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w500)),
-                  ]),
+                  Text(product.weight,
+                      style: GoogleFonts.poppins(
+                          fontSize: 10, color: Colors.grey)),
+                  if (product.rating > 0) ...[
+                    const SizedBox(height: 4),
+                    Row(children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 12),
+                      const SizedBox(width: 2),
+                      Text(product.rating.toString(),
+                          style: GoogleFonts.poppins(
+                              fontSize: 10, fontWeight: FontWeight.w500)),
+                    ]),
+                  ],
                   const SizedBox(height: 4),
                   Text(product.formattedPrice,
-                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                      style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary)),
                   const SizedBox(height: 4),
                   Row(children: [
-                    Icon(Icons.circle, size: 8, color: product.inStock ? Colors.green : Colors.red),
+                    Icon(Icons.circle,
+                        size: 8,
+                        color: product.inStock ? Colors.green : Colors.red),
                     const SizedBox(width: 4),
                     Text(product.inStock ? 'In stock' : 'Out of stock',
-                        style: GoogleFonts.poppins(fontSize: 10, color: product.inStock ? Colors.green : Colors.red)),
+                        style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color:
+                                product.inStock ? Colors.green : Colors.red)),
                   ]),
                   const SizedBox(height: 6),
                   SizedBox(
@@ -110,12 +140,15 @@ class ProductCard extends StatelessWidget {
                               showCartToast(context, product, added: true);
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isInCart ? Colors.grey : const Color(0xFFF55D2C),
+                        backgroundColor:
+                            isInCart ? Colors.grey : const Color(0xFFF55D2C),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6)),
                       ),
-                      child: Text(isInCart ? 'Remove' : 'Add to cart', style: GoogleFonts.poppins(fontSize: 11)),
+                      child: Text(isInCart ? 'Remove' : 'Add to cart',
+                          style: GoogleFonts.poppins(fontSize: 11)),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -126,7 +159,9 @@ class ProductCard extends StatelessWidget {
                           size: 14, color: isFav ? Colors.red : Colors.grey),
                       const SizedBox(width: 4),
                       Text(isFav ? 'In wishlist' : 'Add to wishlist',
-                          style: GoogleFonts.poppins(fontSize: 10, color: isFav ? Colors.red : Colors.grey)),
+                          style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: isFav ? Colors.red : Colors.grey)),
                     ]),
                   ),
                 ],

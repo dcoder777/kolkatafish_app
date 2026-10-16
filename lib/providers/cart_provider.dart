@@ -29,6 +29,11 @@ class PlacedOrder {
   final String address;
   final List<PlacedOrderLine> items;
 
+  /// Billing email used at checkout — required to query Store API order status.
+  final String billingEmail;
+  final String deliveryDate;
+  final String deliverySlot;
+
   PlacedOrder({
     required this.id,
     this.serverId,
@@ -42,9 +47,14 @@ class PlacedOrder {
     this.phone = '',
     this.address = '',
     this.items = const [],
+    this.billingEmail = '',
+    this.deliveryDate = '',
+    this.deliverySlot = '',
   });
 
   String get displayId => serverId != null ? '#$serverId' : id;
+
+  bool get isAwaitingPayment => status == 'awaiting_payment';
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -61,6 +71,9 @@ class PlacedOrder {
         'items': items
             .map((l) => {'name': l.name, 'price': l.price, 'weight': l.weight})
             .toList(),
+        'billingEmail': billingEmail,
+        'deliveryDate': deliveryDate,
+        'deliverySlot': deliverySlot,
       };
 
   factory PlacedOrder.fromJson(Map<String, dynamic> json) {
@@ -85,6 +98,9 @@ class PlacedOrder {
                 weight: l['weight']?.toString() ?? '',
               ))
           .toList(),
+      billingEmail: json['billingEmail']?.toString() ?? '',
+      deliveryDate: json['deliveryDate']?.toString() ?? '',
+      deliverySlot: json['deliverySlot']?.toString() ?? '',
     );
   }
 }
@@ -95,6 +111,8 @@ class CartProvider extends ChangeNotifier {
   }
 
   static const _ordersKey = 'kf_orders';
+  static const _cartKey = 'kf_cart';
+  static const _wishlistKey = 'kf_wishlist';
 
   final List<SeaProduct> _cartItems = [];
   final List<SeaProduct> _wishlistItems = [];
@@ -103,13 +121,41 @@ class CartProvider extends ChangeNotifier {
   Future<void> _loadOrders() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
+      final cartRaw = prefs.getString(_cartKey);
+      if (cartRaw != null && cartRaw.isNotEmpty) {
+        final list = jsonDecode(cartRaw);
+        if (list is List) {
+          _cartItems
+            ..clear()
+            ..addAll(list
+                .whereType<Map<String, dynamic>>()
+                .map(SeaProduct.fromJson));
+        }
+      }
+
+      final wishRaw = prefs.getString(_wishlistKey);
+      if (wishRaw != null && wishRaw.isNotEmpty) {
+        final list = jsonDecode(wishRaw);
+        if (list is List) {
+          _wishlistItems
+            ..clear()
+            ..addAll(list
+                .whereType<Map<String, dynamic>>()
+                .map(SeaProduct.fromJson));
+        }
+      }
+
       final raw = prefs.getString(_ordersKey);
-      if (raw == null || raw.isEmpty) return;
-      final list = jsonDecode(raw);
-      if (list is! List) return;
-      _orders
-        ..clear()
-        ..addAll(list.whereType<Map<String, dynamic>>().map(PlacedOrder.fromJson));
+      if (raw != null && raw.isNotEmpty) {
+        final list = jsonDecode(raw);
+        if (list is List) {
+          _orders
+            ..clear()
+            ..addAll(
+                list.whereType<Map<String, dynamic>>().map(PlacedOrder.fromJson));
+        }
+      }
       notifyListeners();
     } catch (_) {}
   }
@@ -119,6 +165,16 @@ class CartProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
           _ordersKey, jsonEncode(_orders.map((o) => o.toJson()).toList()));
+    } catch (_) {}
+  }
+
+  Future<void> _saveCartAndWishlist() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          _cartKey, jsonEncode(_cartItems.map((p) => p.toJson()).toList()));
+      await prefs.setString(_wishlistKey,
+          jsonEncode(_wishlistItems.map((p) => p.toJson()).toList()));
     } catch (_) {}
   }
 
@@ -140,6 +196,9 @@ class CartProvider extends ChangeNotifier {
     String phone = '',
     String address = '',
     List<PlacedOrderLine> items = const [],
+    String billingEmail = '',
+    String deliveryDate = '',
+    String deliverySlot = '',
   }) {
     final order = PlacedOrder(
       id: 'KF${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}',
@@ -154,12 +213,46 @@ class CartProvider extends ChangeNotifier {
       phone: phone,
       address: address,
       items: items,
+      billingEmail: billingEmail,
+      deliveryDate: deliveryDate,
+      deliverySlot: deliverySlot,
     );
     _orders.insert(0, order);
     _saveOrders();
     notifyListeners();
     return order;
   }
+
+  /// Update the status of an already-recorded order (e.g. after polling the
+  /// Store API for an online payment result).
+  void updateOrderStatus(String orderId, {required String status}) {
+    final index = _orders.indexWhere((o) => o.id == orderId);
+    if (index == -1) return;
+    final old = _orders[index];
+    _orders[index] = PlacedOrder(
+      id: old.id,
+      serverId: old.serverId,
+      orderKey: old.orderKey,
+      status: status,
+      synced: old.synced,
+      total: old.total,
+      payment: old.payment,
+      placedAt: old.placedAt,
+      customerName: old.customerName,
+      phone: old.phone,
+      address: old.address,
+      items: old.items,
+      billingEmail: old.billingEmail,
+      deliveryDate: old.deliveryDate,
+      deliverySlot: old.deliverySlot,
+    );
+    _saveOrders();
+    notifyListeners();
+  }
+
+  /// True when any cart item came from the bundled offline catalogue and
+  /// must not be sent to the live store checkout.
+  bool get hasFallbackItems => _cartItems.any((p) => p.isFallback);
 
   double get cartTotal =>
       _cartItems.fold(0, (sum, item) => sum + item.price);
@@ -172,12 +265,14 @@ class CartProvider extends ChangeNotifier {
   void addToCart(SeaProduct product) {
     if (!isInCart(product)) {
       _cartItems.add(product);
+      _saveCartAndWishlist();
       notifyListeners();
     }
   }
 
   void removeFromCart(SeaProduct product) {
     _cartItems.removeWhere((p) => p.id == product.id);
+    _saveCartAndWishlist();
     notifyListeners();
   }
 
@@ -187,11 +282,13 @@ class CartProvider extends ChangeNotifier {
     } else {
       _wishlistItems.add(product);
     }
+    _saveCartAndWishlist();
     notifyListeners();
   }
 
   void clearCart() {
     _cartItems.clear();
+    _saveCartAndWishlist();
     notifyListeners();
   }
 }

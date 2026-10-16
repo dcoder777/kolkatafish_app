@@ -82,17 +82,17 @@ class _HomeScreenState extends State<HomeScreen> {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         indicatorColor: const Color(0xFFF55D2C).withValues(alpha: 0.1),
         destinations: [
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded, color: Color(0xFFF55D2C)),
             label: 'Home',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.info_outline),
             selectedIcon: Icon(Icons.info_rounded, color: Color(0xFFF55D2C)),
             label: 'About',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.shopping_bag_outlined),
             selectedIcon: Icon(Icons.shopping_bag_rounded, color: Color(0xFFF55D2C)),
             label: 'Shop',
@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             label: 'Cart',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person_rounded, color: Color(0xFFF55D2C)),
             label: 'Profile',
@@ -199,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'We ONLY sell 100% Fresh Water Products with 0% Chemicals.',
+              'We ONLY sell 100% Fresh Water Products with 0% Storage.',
               style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
             ),
           ),

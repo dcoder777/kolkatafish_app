@@ -57,26 +57,26 @@ class ContactTab extends StatelessWidget {
             theme,
             Icons.headset_mic_outlined,
             'Support',
-            '+91 9830083112',
-            '+91 8017404851',
-            phone1: '+91 9830083112',
-            phone2: '+91 8017404851',
+            '+91 8348043021',
+            '+91 7044476224',
+            phone1: '+91 8348043021',
+            phone2: '+91 7044476224',
           ),
           const SizedBox(height: 12),
           _contactCard(
             theme,
             Icons.email,
             'Email Us',
-            'kolkatfish72@gmail.com',
-            'kolkatfish83@gmail.com',
+            'info@kolkatafish.com',
+            'kolkatafish.com',
           ),
           const SizedBox(height: 12),
           _contactCard(
             theme,
             Icons.location_on,
             'Visit Us',
-            '86, Thakurpukur Road, Kolkata\nNear KMC School',
-            'Open: 7 AM - 9 PM',
+            '69, Dhakuria East Road, Kolkata 700078',
+            'kolkatafish.com',
           ),
           const SizedBox(height: 24),
           Card(
@@ -88,16 +88,22 @@ class ContactTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Business Hours',
+                    'Store',
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _hoursRow('Monday - Saturday', '7:00 AM - 9:00 PM'),
-                  _hoursRow('Sunday', '8:00 AM - 6:00 PM'),
-                  _hoursRow('Public Holidays', 'Closed'),
+                  Text(
+                    'Opening hours and delivery slots are published on kolkatafish.com. '
+                    'Call the numbers above for queries about an order.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -107,7 +113,8 @@ class ContactTab extends StatelessWidget {
     );
   }
 
-  Widget _contactCard(ThemeData theme, IconData icon, String title, String line1, String line2,
+  Widget _contactCard(
+      ThemeData theme, IconData icon, String title, String line1, String line2,
       {String? phone1, String? phone2}) {
     return Card(
       elevation: 0,
@@ -198,28 +205,6 @@ class ContactTab extends StatelessWidget {
     await launchUrl(
       Uri.parse('tel:$digits'),
       mode: LaunchMode.externalApplication,
-    );
-  }
-
-  Widget _hoursRow(String day, String hours) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            day,
-            style: GoogleFonts.poppins(fontSize: 13),
-          ),
-          Text(
-            hours,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

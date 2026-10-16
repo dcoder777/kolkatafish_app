@@ -229,7 +229,7 @@ class StoreApiService {
     final token = res.headers['cart-token'] ?? '';
     final nonce = res.headers['nonce'] ?? '';
     if (token.isEmpty || nonce.isEmpty) {
-      throw StoreApiException('Store did not return a cart session');
+      throw const StoreApiException('Store did not return a cart session');
     }
     return StoreCartSession(token: token, nonce: nonce);
   }
@@ -332,6 +332,136 @@ class StoreApiService {
       redirectUrl: paymentResult['redirect_url']?.toString() ?? '',
     );
   }
+  /// Update the cart's customer address and return the server-computed
+  /// totals for that destination (items + fees + shipping).
+  ///
+  /// This is the source of truth for what the customer will actually be
+  /// charged — the app never invents its own delivery fee.
+  Future<StoreCartTotals> updateCustomer(
+    StoreCartSession session, {
+    required String firstName,
+    required String lastName,
+    required String address1,
+    required String city,
+    required String state,
+    required String postcode,
+    required String country,
+    required String email,
+    required String phone,
+  }) async {
+    final address = {
+      'first_name': firstName,
+      'last_name': lastName,
+      'company': '',
+      'address_1': address1,
+      'address_2': '',
+      'city': city,
+      'state': state,
+      'postcode': postcode,
+      'country': country,
+      'phone': phone,
+      'email': email,
+    };
+
+    final res = await _client
+        .post(
+          Uri.parse('$_base/cart/update-customer'),
+          headers: {
+            ..._headers,
+            'Nonce': session.nonce,
+            'Cart-Token': session.token,
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'billing_address': address,
+            'shipping_address': {...address}..remove('email'),
+          }),
+        )
+        .timeout(const Duration(seconds: 25));
+
+    if (res.statusCode != 200) {
+      throw StoreApiException(
+          'Could not calculate delivery for this address (${res.statusCode})');
+    }
+
+    final json = jsonDecode(res.body);
+    if (json is! Map<String, dynamic>) {
+      throw const StoreApiException('Unexpected response while calculating delivery');
+    }
+
+    final totalsMap = json['totals'] is Map<String, dynamic>
+        ? json['totals'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final minorUnit =
+        (totalsMap['currency_minor_unit'] as num?)?.toInt() ?? 0;
+
+    final fees = <StoreFee>[
+      for (final f in (json['fees'] is List ? json['fees'] as List : const []))
+        if (f is Map<String, dynamic>)
+          StoreFee(
+            name: f['name']?.toString() ?? 'Fee',
+            amount: _toRupees(
+                (f['totals'] is Map ? f['totals']['total'] : null), minorUnit),
+          ),
+    ];
+
+    var shipping = _toRupees(totalsMap['total_shipping'], minorUnit);
+    if (shipping <= 0) {
+      // Fall back to the selected shipping rate if the total is not set.
+      final rates = json['shipping_rates'] is List
+          ? json['shipping_rates'] as List
+          : const [];
+      for (final pkg in rates.whereType<Map<String, dynamic>>()) {
+        final list = pkg['shipping_rates'] is List
+            ? pkg['shipping_rates'] as List
+            : const [];
+        for (final r in list.whereType<Map<String, dynamic>>()) {
+          if (r['selected'] == true) {
+            shipping = _toRupees(r['price'], minorUnit);
+          }
+        }
+      }
+    }
+
+    return StoreCartTotals(
+      totalItems: _toRupees(totalsMap['total_items'], minorUnit),
+      fees: fees,
+      shipping: shipping,
+      totalPrice: _toRupees(totalsMap['total_price'], minorUnit),
+    );
+  }
+
+  /// Fetch the live status of an order previously placed through the Store API.
+  Future<StoreOrderStatus> fetchOrderStatus({
+    required int orderId,
+    required String orderKey,
+    required String billingEmail,
+  }) async {
+    final uri = Uri.parse('$_base/order/$orderId').replace(
+      queryParameters: {
+        'key': orderKey,
+        'billing_email': billingEmail,
+      },
+    );
+
+    final res = await _client
+        .get(uri, headers: _headers)
+        .timeout(const Duration(seconds: 25));
+
+    if (res.statusCode != 200) {
+      throw StoreApiException('Could not fetch order status (${res.statusCode})');
+    }
+
+    final json = jsonDecode(res.body);
+    if (json is! Map<String, dynamic>) {
+      throw const StoreApiException('Unexpected order status response');
+    }
+
+    return StoreOrderStatus(
+      status: json['status']?.toString() ?? '',
+      needsPayment: json['needs_payment'] == true,
+    );
+  }
 }
 
 /// Session credentials for the WooCommerce Store API cart.
@@ -340,6 +470,42 @@ class StoreCartSession {
   final String nonce;
 
   const StoreCartSession({required this.token, required this.nonce});
+}
+
+/// Server-computed money breakdown for a cart at a given address.
+class StoreCartTotals {
+  final double totalItems;
+  final List<StoreFee> fees;
+  final double shipping;
+  final double totalPrice;
+
+  const StoreCartTotals({
+    required this.totalItems,
+    required this.fees,
+    required this.shipping,
+    required this.totalPrice,
+  });
+}
+
+/// A named fee line (e.g. "Handling Charges") from the store.
+class StoreFee {
+  final String name;
+  final double amount;
+
+  const StoreFee({required this.name, required this.amount});
+}
+
+/// Live status of a placed order.
+class StoreOrderStatus {
+  final String status;
+  final bool needsPayment;
+
+  const StoreOrderStatus({required this.status, required this.needsPayment});
+
+  bool get isPaid =>
+      status == 'processing' || status == 'completed' || status == 'on-hold';
+  bool get isFailed =>
+      status == 'failed' || status == 'cancelled' || status == 'refunded';
 }
 
 /// Result of a successful Store API checkout.
