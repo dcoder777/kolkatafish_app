@@ -38,9 +38,10 @@ class CartTab extends StatelessWidget {
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(12),
-            itemCount: cart.cartItems.length,
+            itemCount: cart.cartEntries.length,
             itemBuilder: (context, index) {
-              final item = cart.cartItems[index];
+              final entry = cart.cartEntries[index];
+              final item = entry.product;
               final colors = [
                 Colors.blue.shade200, Colors.orange.shade200,
                 Colors.green.shade200, Colors.pink.shade200, Colors.teal.shade200,
@@ -48,35 +49,142 @@ class CartTab extends StatelessWidget {
               final color = colors[item.id.hashCode.abs() % colors.length];
 
               return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: AppNetworkImage(
-                    imageUrl: item.imageUrl,
-                    width: 56,
-                    height: 56,
-                    borderRadius: BorderRadius.circular(8),
-                    placeholderColor: color,
-                    fallbackIcon: item.category == 'Meat Mania'
-                        ? Icons.restaurant
-                        : Icons.set_meal,
-                  ),
-                  title: Text(item.name,
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(item.weight, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
-                      Text(item.formattedPrice,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold,
-                              color: const Color(0xFFF55D2C))),
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(product: item),
+                          ),
+                        ),
+                        child: AppNetworkImage(
+                          imageUrl: item.imageUrl,
+                          width: 64,
+                          height: 64,
+                          borderRadius: BorderRadius.circular(10),
+                          placeholderColor: color,
+                          fallbackIcon: item.category == 'Meat Mania'
+                              ? Icons.restaurant
+                              : Icons.set_meal,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailScreen(product: item),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.name,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                item.weight,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${entry.totalPrice.toStringAsFixed(0)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFFF55D2C),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Quantity Stepper
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () => cart.decrementQuantity(item),
+                              borderRadius: const BorderRadius.horizontal(
+                                left: Radius.circular(7),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
+                                child: Icon(
+                                  entry.quantity == 1
+                                      ? Icons.delete_outline
+                                      : Icons.remove,
+                                  size: 16,
+                                  color: entry.quantity == 1
+                                      ? Colors.red
+                                      : const Color(0xFFF55D2C),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              constraints: const BoxConstraints(minWidth: 26),
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Text(
+                                '${entry.quantity}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () => cart.incrementQuantity(item),
+                              borderRadius: const BorderRadius.horizontal(
+                                right: Radius.circular(7),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: Color(0xFFF55D2C),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () => cart.removeFromCart(item),
-                  ),
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => ProductDetailScreen(product: item))),
                 ),
               );
             },

@@ -116,12 +116,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       final session = await _service.createCart();
-      for (final item in cart.cartItems) {
-        final productId = int.tryParse(item.id);
+      for (final entry in cart.cartEntries) {
+        final productId = int.tryParse(entry.product.id);
         if (productId == null) {
-          throw StoreApiException('"${item.name}" is not available in the live store.');
+          throw StoreApiException('"${entry.product.name}" is not available in the live store.');
         }
-        await _service.addToCart(session, productId);
+        await _service.addToCart(session, productId, quantity: entry.quantity);
       }
 
       final (firstName, lastName) = _nameParts;
@@ -168,8 +168,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() => _placing = true);
 
     final cart = context.read<CartProvider>();
-    final items = cart.cartItems
-        .map((p) => PlacedOrderLine(name: p.name, price: p.price, weight: p.weight))
+    final items = cart.cartEntries
+        .map((e) => PlacedOrderLine(
+              name: e.product.name,
+              price: e.totalPrice,
+              weight: e.product.weight,
+              quantity: e.quantity,
+            ))
         .toList();
     final address = '${widget.address1}, ${widget.city} - ${widget.pincode}';
     final (firstName, lastName) = _nameParts;

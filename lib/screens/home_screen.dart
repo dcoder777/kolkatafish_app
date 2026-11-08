@@ -41,27 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const AppLogo(),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            child: ElevatedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ContactTab()),
-              ),
-              icon: const Icon(Icons.headset_mic_outlined, size: 16),
-              label: Text(
-                'Support',
-                style: GoogleFonts.poppins(fontSize: 12),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CAF50),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () => Navigator.push(
@@ -88,9 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Home',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.info_outline),
-            selectedIcon: Icon(Icons.info_rounded, color: Color(0xFFF55D2C)),
-            label: 'About',
+            icon: Icon(Icons.headset_mic_outlined),
+            selectedIcon: Icon(Icons.headset_mic, color: Color(0xFFF55D2C)),
+            label: 'Support',
           ),
           const NavigationDestination(
             icon: Icon(Icons.shopping_bag_outlined),
@@ -152,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _getScreen() {
     switch (_navIndex) {
       case 1:
-        return const AboutTab();
+        return const ContactTab(hideAppBar: true);
       case 2:
         return const ShopTab();
       case 3:
@@ -223,6 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           categoryName: cat.name,
                           icon: cat.icon,
                           color: cat.color,
+                          imageAsset: cat.imageAsset,
                         ),
                       ),
                     ),
@@ -235,7 +215,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: cat.color.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(cat.icon, color: cat.color, size: 32),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: cat.imageAsset != null
+                                ? Image.asset(
+                                    cat.imageAsset!,
+                                    fit: BoxFit.cover,
+                                    width: 70,
+                                    height: 70,
+                                  )
+                                : Icon(cat.icon, color: cat.color, size: 32),
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -299,19 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.set_meal, color: Color(0xFFF55D2C), size: 28),
-              const SizedBox(width: 8),
-              Text(
-                'KolkataFish',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+          const AppLogo(height: 28),
           const SizedBox(height: 12),
           Text(
             'Disclaimer: KolkataFish is a B2C venture of Kolkata and Howrah for Online Fresh Water Fish, Sea Food Fish, Prawns, Chicken and muttons.',
@@ -322,11 +300,22 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _footerLink('Home', () => _onNavTap(0)),
-              _footerLink('About Us', () => _onNavTap(1)),
-              _footerLink('Contact', () => Navigator.push(
+              _footerLink('About Us', () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const ContactTab()),
+                    MaterialPageRoute(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(
+                          title: Text(
+                            'About KolkataFish',
+                            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                          ),
+                          centerTitle: true,
+                        ),
+                        body: const AboutTab(),
+                      ),
+                    ),
                   )),
+              _footerLink('Support', () => _onNavTap(1)),
               _footerLink('Shop', () => _onNavTap(2)),
             ],
           ),

@@ -129,27 +129,96 @@ class ProductCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isInCart
-                          ? () {
-                              cart.removeFromCart(product);
-                              showCartToast(context, product, added: false);
-                            }
-                          : () {
-                              cart.addToCart(product);
-                              showCartToast(context, product, added: true);
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isInCart ? Colors.grey : const Color(0xFFF55D2C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6)),
-                      ),
-                      child: Text(isInCart ? 'Remove' : 'Add to cart',
-                          style: GoogleFonts.poppins(fontSize: 11)),
-                    ),
+                    height: 32,
+                    child: isInCart
+                        ? Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF55D2C).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFF55D2C)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    cart.decrementQuantity(product);
+                                    if (cart.getQuantity(product) == 0) {
+                                      showCartToast(context, product, added: false);
+                                    }
+                                  },
+                                  borderRadius: const BorderRadius.horizontal(
+                                    left: Radius.circular(5),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    child: Icon(
+                                      cart.getQuantity(product) == 1
+                                          ? Icons.delete_outline
+                                          : Icons.remove,
+                                      size: 15,
+                                      color: cart.getQuantity(product) == 1
+                                          ? Colors.red
+                                          : const Color(0xFFF55D2C),
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${cart.getQuantity(product)}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFFF55D2C),
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () => cart.incrementQuantity(product),
+                                  borderRadius: const BorderRadius.horizontal(
+                                    right: Radius.circular(5),
+                                  ),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    child: Icon(
+                                      Icons.add,
+                                      size: 15,
+                                      color: Color(0xFFF55D2C),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ElevatedButton(
+                            onPressed: product.inStock
+                                ? () {
+                                    cart.addToCart(product);
+                                    showCartToast(context, product, added: true);
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: product.inStock
+                                  ? const Color(0xFFF55D2C)
+                                  : Colors.grey.shade300,
+                              foregroundColor: product.inStock
+                                  ? Colors.white
+                                  : Colors.grey.shade600,
+                              disabledBackgroundColor: Colors.grey.shade300,
+                              disabledForegroundColor: Colors.grey.shade600,
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6)),
+                            ),
+                            child: Text(
+                              product.inStock ? 'Add to cart' : 'Out of stock',
+                              style: GoogleFonts.poppins(fontSize: 11),
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 4),
                   GestureDetector(

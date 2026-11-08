@@ -480,18 +480,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 20),
               _sectionHeader('Order Summary'),
-              ...cart.cartItems.map((item) => Padding(
+              ...cart.cartEntries.map((entry) => Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(item.name,
-                              style: GoogleFonts.poppins(fontSize: 13)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(entry.product.name,
+                                  style: GoogleFonts.poppins(fontSize: 13)),
+                              Text(
+                                '${entry.quantity} × ${entry.product.formattedPrice}',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 11, color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
                         ),
-                        Text('${item.weight} × ${item.formattedPrice}',
+                        Text('₹${entry.totalPrice.toStringAsFixed(0)}',
                             style: GoogleFonts.poppins(
-                                fontSize: 13, fontWeight: FontWeight.w500)),
+                                fontSize: 13, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   )),

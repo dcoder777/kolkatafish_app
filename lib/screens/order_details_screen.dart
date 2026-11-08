@@ -82,7 +82,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     } else {
       for (final item in order.items) {
         b.writeln(item.name);
-        b.writeln('  ${item.weight} x Rs.${item.price.toStringAsFixed(0)}');
+        b.writeln('  Qty: ${item.quantity} (${item.weight}) - Rs.${item.price.toStringAsFixed(0)}');
         b.writeln('');
       }
     }
@@ -267,7 +267,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.name, style: GoogleFonts.poppins(fontSize: 13)),
-                                    Text(item.weight,
+                                    Text(
+                                        item.quantity > 1
+                                            ? '${item.weight} • Qty: ${item.quantity}'
+                                            : item.weight,
                                         style: GoogleFonts.poppins(
                                             fontSize: 12, color: Colors.grey)),
                                   ],

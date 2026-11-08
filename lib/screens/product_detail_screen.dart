@@ -158,38 +158,94 @@ class ProductDetailScreen extends StatelessWidget {
           ],
         ),
         child: Row(children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => cart.toggleWishlist(product),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: BorderSide(
-                    color: isFav ? Colors.red : const Color(0xFFF55D2C)),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+          IconButton.outlined(
+            onPressed: () => cart.toggleWishlist(product),
+            icon: Icon(
+              isFav ? Icons.favorite : Icons.favorite_border,
+              color: isFav ? Colors.red : const Color(0xFFF55D2C),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                color: isFav ? Colors.red : const Color(0xFFF55D2C),
               ),
-              child: Text(isFav ? 'In Wishlist' : 'Add to Wishlist',
-                  style: GoogleFonts.poppins(
-                      color: isFav ? Colors.red : const Color(0xFFF55D2C))),
+              padding: const EdgeInsets.all(12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: ElevatedButton(
-              onPressed: isInCart
-                  ? () => cart.removeFromCart(product)
-                  : () => cart.addToCart(product),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    isInCart ? Colors.grey : const Color(0xFFF55D2C),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Text(isInCart ? 'Remove from Cart' : 'Add to Cart',
-                  style: GoogleFonts.poppins()),
-            ),
+            child: isInCart
+                ? Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF55D2C).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFF55D2C)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          onPressed: () => cart.decrementQuantity(product),
+                          icon: Icon(
+                            cart.getQuantity(product) == 1
+                                ? Icons.delete_outline
+                                : Icons.remove,
+                            color: cart.getQuantity(product) == 1
+                                ? Colors.red
+                                : const Color(0xFFF55D2C),
+                          ),
+                        ),
+                        Text(
+                          '${cart.getQuantity(product)} in Cart (₹${(product.price * cart.getQuantity(product)).toStringAsFixed(0)})',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFF55D2C),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => cart.incrementQuantity(product),
+                          icon: const Icon(
+                            Icons.add,
+                            color: Color(0xFFF55D2C),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ElevatedButton.icon(
+                    onPressed: product.inStock ? () => cart.addToCart(product) : null,
+                    icon: Icon(
+                      product.inStock
+                          ? Icons.add_shopping_cart
+                          : Icons.remove_shopping_cart_outlined,
+                      size: 18,
+                    ),
+                    label: Text(
+                      product.inStock ? 'Add to Cart' : 'Out of Stock',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: product.inStock
+                          ? const Color(0xFFF55D2C)
+                          : Colors.grey.shade300,
+                      foregroundColor: product.inStock
+                          ? Colors.white
+                          : Colors.grey.shade600,
+                      disabledBackgroundColor: Colors.grey.shade300,
+                      disabledForegroundColor: Colors.grey.shade600,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
           ),
         ]),
       ),

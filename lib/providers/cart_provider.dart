@@ -3,15 +3,48 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sea_product.dart';
 
+class CartItem {
+  final SeaProduct product;
+  int quantity;
+
+  CartItem({
+    required this.product,
+    this.quantity = 1,
+  });
+
+  double get totalPrice => product.price * quantity;
+
+  Map<String, dynamic> toJson() => {
+        'product': product.toJson(),
+        'quantity': quantity,
+      };
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    if (json.containsKey('product')) {
+      return CartItem(
+        product: SeaProduct.fromJson(json['product'] as Map<String, dynamic>),
+        quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      );
+    }
+    // Backward compatibility for raw SeaProduct in storage
+    return CartItem(
+      product: SeaProduct.fromJson(json),
+      quantity: 1,
+    );
+  }
+}
+
 class PlacedOrderLine {
   final String name;
   final double price;
   final String weight;
+  final int quantity;
 
   const PlacedOrderLine({
     required this.name,
     required this.price,
     required this.weight,
+    this.quantity = 1,
   });
 }
 
@@ -69,7 +102,12 @@ class PlacedOrder {
         'phone': phone,
         'address': address,
         'items': items
-            .map((l) => {'name': l.name, 'price': l.price, 'weight': l.weight})
+            .map((l) => {
+                  'name': l.name,
+                  'price': l.price,
+                  'weight': l.weight,
+                  'quantity': l.quantity,
+                })
             .toList(),
         'billingEmail': billingEmail,
         'deliveryDate': deliveryDate,
@@ -96,6 +134,7 @@ class PlacedOrder {
                 name: l['name']?.toString() ?? '',
                 price: (l['price'] as num?)?.toDouble() ?? 0,
                 weight: l['weight']?.toString() ?? '',
+                quantity: (l['quantity'] as num?)?.toInt() ?? 1,
               ))
           .toList(),
       billingEmail: json['billingEmail']?.toString() ?? '',
@@ -114,7 +153,7 @@ class CartProvider extends ChangeNotifier {
   static const _cartKey = 'kf_cart';
   static const _wishlistKey = 'kf_wishlist';
 
-  final List<SeaProduct> _cartItems = [];
+  final List<CartItem> _cartItems = [];
   final List<SeaProduct> _wishlistItems = [];
   final List<PlacedOrder> _orders = [];
 
@@ -130,7 +169,7 @@ class CartProvider extends ChangeNotifier {
             ..clear()
             ..addAll(list
                 .whereType<Map<String, dynamic>>()
-                .map(SeaProduct.fromJson));
+                .map(CartItem.fromJson));
         }
       }
 
@@ -178,10 +217,14 @@ class CartProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  List<SeaProduct> get cartItems => List.unmodifiable(_cartItems);
+  List<CartItem> get cartEntries => List.unmodifiable(_cartItems);
+  List<SeaProduct> get cartItems =>
+      List.unmodifiable(_cartItems.map((c) => c.product));
   List<SeaProduct> get wishlistItems => List.unmodifiable(_wishlistItems);
   List<PlacedOrder> get orders => List.unmodifiable(_orders);
-  int get cartCount => _cartItems.length;
+
+  int get cartCount => _cartItems.fold(0, (sum, c) => sum + c.quantity);
+  int get cartUniqueCount => _cartItems.length;
   int get wishlistCount => _wishlistItems.length;
   int get orderCount => _orders.length;
 
@@ -252,26 +295,76 @@ class CartProvider extends ChangeNotifier {
 
   /// True when any cart item came from the bundled offline catalogue and
   /// must not be sent to the live store checkout.
-  bool get hasFallbackItems => _cartItems.any((p) => p.isFallback);
+  bool get hasFallbackItems => _cartItems.any((c) => c.product.isFallback);
 
   double get cartTotal =>
-      _cartItems.fold(0, (sum, item) => sum + item.price);
+      _cartItems.fold(0, (sum, item) => sum + item.totalPrice);
 
   bool isInCart(SeaProduct product) =>
-      _cartItems.any((p) => p.id == product.id);
+      _cartItems.any((c) => c.product.id == product.id);
+
+  int getQuantity(SeaProduct product) {
+    final idx = _cartItems.indexWhere((c) => c.product.id == product.id);
+    return idx != -1 ? _cartItems[idx].quantity : 0;
+  }
+
   bool isInWishlist(SeaProduct product) =>
       _wishlistItems.any((p) => p.id == product.id);
 
-  void addToCart(SeaProduct product) {
-    if (!isInCart(product)) {
-      _cartItems.add(product);
+  void addToCart(SeaProduct product, {int quantity = 1}) {
+    final idx = _cartItems.indexWhere((c) => c.product.id == product.id);
+    if (idx != -1) {
+      _cartItems[idx].quantity += quantity;
+    } else {
+      _cartItems.add(CartItem(product: product, quantity: quantity > 0 ? quantity : 1));
+    }
+    _saveCartAndWishlist();
+    notifyListeners();
+  }
+
+  void incrementQuantity(SeaProduct product) {
+    final idx = _cartItems.indexWhere((c) => c.product.id == product.id);
+    if (idx != -1) {
+      _cartItems[idx].quantity += 1;
+      _saveCartAndWishlist();
+      notifyListeners();
+    } else {
+      addToCart(product, quantity: 1);
+    }
+  }
+
+  void decrementQuantity(SeaProduct product) {
+    final idx = _cartItems.indexWhere((c) => c.product.id == product.id);
+    if (idx != -1) {
+      if (_cartItems[idx].quantity > 1) {
+        _cartItems[idx].quantity -= 1;
+      } else {
+        _cartItems.removeAt(idx);
+      }
+      _saveCartAndWishlist();
+      notifyListeners();
+    }
+  }
+
+  void updateQuantity(SeaProduct product, int quantity) {
+    final idx = _cartItems.indexWhere((c) => c.product.id == product.id);
+    if (idx != -1) {
+      if (quantity <= 0) {
+        _cartItems.removeAt(idx);
+      } else {
+        _cartItems[idx].quantity = quantity;
+      }
+      _saveCartAndWishlist();
+      notifyListeners();
+    } else if (quantity > 0) {
+      _cartItems.add(CartItem(product: product, quantity: quantity));
       _saveCartAndWishlist();
       notifyListeners();
     }
   }
 
   void removeFromCart(SeaProduct product) {
-    _cartItems.removeWhere((p) => p.id == product.id);
+    _cartItems.removeWhere((c) => c.product.id == product.id);
     _saveCartAndWishlist();
     notifyListeners();
   }

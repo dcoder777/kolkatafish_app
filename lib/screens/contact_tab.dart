@@ -3,26 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactTab extends StatelessWidget {
-  const ContactTab({super.key});
+  final bool hideAppBar;
+  const ContactTab({super.key, this.hideAppBar = false});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Contact Us',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(24),
+    final content = ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      children: [
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: const Color(0xFFF55D2C).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -58,7 +52,7 @@ class ContactTab extends StatelessWidget {
             Icons.headset_mic_outlined,
             'Support',
             '+91 8348043021',
-            '+91 7044476224',
+            line2: '+91 7044476224',
             phone1: '+91 8348043021',
             phone2: '+91 7044476224',
           ),
@@ -68,54 +62,36 @@ class ContactTab extends StatelessWidget {
             Icons.email,
             'Email Us',
             'info@kolkatafish.com',
-            'kolkatafish.com',
           ),
           const SizedBox(height: 12),
           _contactCard(
             theme,
             Icons.location_on,
             'Visit Us',
-            '69, Dhakuria East Road, Kolkata 700078',
-            'kolkatafish.com',
-          ),
-          const SizedBox(height: 24),
-          Card(
-            elevation: 0,
-            color: Colors.grey.shade50,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Store',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Opening hours and delivery slots are published on kolkatafish.com. '
-                    'Call the numbers above for queries about an order.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      height: 1.5,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            '69, Dhakuria east road, kolkata 700078',
           ),
         ],
+      );
+
+    if (hideAppBar) {
+      return content;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Contact Us',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
       ),
+      body: content,
     );
   }
 
   Widget _contactCard(
-      ThemeData theme, IconData icon, String title, String line1, String line2,
-      {String? phone1, String? phone2}) {
+      ThemeData theme, IconData icon, String title, String line1,
+      {String? line2, String? phone1, String? phone2}) {
     return Card(
       elevation: 0,
       color: Colors.grey.shade50,
@@ -153,15 +129,16 @@ class ContactTab extends StatelessWidget {
                             color: Colors.grey.shade600,
                           ),
                         ),
-                  phone2 != null
-                      ? _phoneLink(phone2)
-                      : Text(
-                          line2,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
+                  if (phone2 != null)
+                    _phoneLink(phone2)
+                  else if (line2 != null && line2.isNotEmpty)
+                    Text(
+                      line2,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                 ],
               ),
             ),
