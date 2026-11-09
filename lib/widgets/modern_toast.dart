@@ -5,7 +5,6 @@ enum ToastStyle { success, error, info, warning }
 
 class ModernToast {
   static OverlayEntry? _currentEntry;
-  static _ToastOverlayState? _currentState;
 
   static void show(
     BuildContext context, {
@@ -21,7 +20,6 @@ class ModernToast {
   }) {
     _currentEntry?.remove();
     _currentEntry = null;
-    _currentState = null;
 
     OverlayState? targetOverlay = overlay ?? Overlay.maybeOf(context);
     if (targetOverlay == null) {

@@ -145,8 +145,12 @@ class PlacedOrder {
 }
 
 class CartProvider extends ChangeNotifier {
-  CartProvider() {
-    _loadOrders();
+  CartProvider([SharedPreferences? prefs]) {
+    if (prefs != null) {
+      _initFromPrefs(prefs);
+    } else {
+      _loadOrders();
+    }
   }
 
   static const _ordersKey = 'kf_orders';
@@ -157,10 +161,8 @@ class CartProvider extends ChangeNotifier {
   final List<SeaProduct> _wishlistItems = [];
   final List<PlacedOrder> _orders = [];
 
-  Future<void> _loadOrders() async {
+  void _initFromPrefs(SharedPreferences prefs) {
     try {
-      final prefs = await SharedPreferences.getInstance();
-
       final cartRaw = prefs.getString(_cartKey);
       if (cartRaw != null && cartRaw.isNotEmpty) {
         final list = jsonDecode(cartRaw);
@@ -195,6 +197,13 @@ class CartProvider extends ChangeNotifier {
                 list.whereType<Map<String, dynamic>>().map(PlacedOrder.fromJson));
         }
       }
+    } catch (_) {}
+  }
+
+  Future<void> _loadOrders() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _initFromPrefs(prefs);
       notifyListeners();
     } catch (_) {}
   }
@@ -297,6 +306,32 @@ class CartProvider extends ChangeNotifier {
   /// must not be sent to the live store checkout.
   bool get hasFallbackItems => _cartItems.any((c) => c.product.isFallback);
 
+  String _appliedCoupon = '';
+  double _couponDiscount = 0.0;
+  String _couponDescription = '';
+
+  String get appliedCoupon => _appliedCoupon;
+  double get couponDiscount => _couponDiscount;
+  String get couponDescription => _couponDescription;
+  bool get hasCoupon => _appliedCoupon.isNotEmpty;
+
+  double get cartSubtotal => cartTotal;
+  double get cartTotalAfterDiscount => (cartTotal - _couponDiscount).clamp(0.0, double.infinity);
+
+  void setCoupon(String code, {double discount = 0.0, String description = ''}) {
+    _appliedCoupon = code.trim();
+    _couponDiscount = discount;
+    _couponDescription = description;
+    notifyListeners();
+  }
+
+  void removeCoupon() {
+    _appliedCoupon = '';
+    _couponDiscount = 0.0;
+    _couponDescription = '';
+    notifyListeners();
+  }
+
   double get cartTotal =>
       _cartItems.fold(0, (sum, item) => sum + item.totalPrice);
 
@@ -381,6 +416,7 @@ class CartProvider extends ChangeNotifier {
 
   void clearCart() {
     _cartItems.clear();
+    removeCoupon();
     _saveCartAndWishlist();
     notifyListeners();
   }

@@ -19,19 +19,29 @@ class AuthProvider extends ChangeNotifier {
 
   final AuthService _authService = AuthService();
 
-  AuthProvider() {
-    _restore();
+  AuthProvider([SharedPreferences? prefs]) {
+    if (prefs != null) {
+      _initFromPrefs(prefs);
+    } else {
+      _restore();
+    }
+  }
+
+  void _initFromPrefs(SharedPreferences prefs) {
+    _userName = prefs.getString(_keyName) ?? '';
+    _userEmail = prefs.getString(_keyEmail) ?? '';
+    _userPhone = prefs.getString(_keyPhone) ?? '';
+    _userId = prefs.getInt(_keyUserId);
+    _isGuest = prefs.getBool(_keyGuest) ?? false;
+    // User is considered logged in if explicit flag is true or profile exists
+    final savedLoggedIn = prefs.getBool(_keyLoggedIn) ?? false;
+    _isLoggedIn = savedLoggedIn || (_userName.isNotEmpty && (_userEmail.isNotEmpty || _userPhone.isNotEmpty));
   }
 
   Future<void> _restore() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _isLoggedIn = prefs.getBool(_keyLoggedIn) ?? false;
-      _isGuest = prefs.getBool(_keyGuest) ?? false;
-      _userId = prefs.getInt(_keyUserId);
-      _userName = prefs.getString(_keyName) ?? '';
-      _userEmail = prefs.getString(_keyEmail) ?? '';
-      _userPhone = prefs.getString(_keyPhone) ?? '';
+      _initFromPrefs(prefs);
       notifyListeners();
     } catch (_) {}
   }
@@ -155,13 +165,15 @@ class AuthProvider extends ChangeNotifier {
     return AuthService.nameFromEmail(email);
   }
 
-  void loginAsGuest(String name, String phone) {
-    _isLoggedIn = false;
+  void loginAsGuest(String name, String phone, {String? email}) {
+    _isLoggedIn = true;
     _isGuest = true;
     _userId = null;
-    _userName = name;
-    _userPhone = phone;
-    _userEmail = '';
+    _userName = name.trim();
+    _userPhone = phone.trim();
+    if (email != null && email.trim().isNotEmpty) {
+      _userEmail = email.trim();
+    }
     _persist();
     notifyListeners();
   }

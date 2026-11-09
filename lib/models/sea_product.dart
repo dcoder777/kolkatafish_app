@@ -7,6 +7,11 @@ class SeaProduct {
   final double price;
   final String priceUnit;
   final String weight;
+  final String grossWeight;
+  final String netWeight;
+  final String pieces;
+  final String size;
+  final String shortDescription;
   final String imageUrl;
   final bool inStock;
   final bool isFeatured;
@@ -27,6 +32,11 @@ class SeaProduct {
     required this.price,
     required this.priceUnit,
     this.weight = '500 gm',
+    this.grossWeight = '',
+    this.netWeight = '',
+    this.pieces = '',
+    this.size = '',
+    this.shortDescription = '',
     this.imageUrl = '',
     this.inStock = true,
     this.isFeatured = false,
@@ -46,6 +56,11 @@ class SeaProduct {
         'price': price,
         'priceUnit': priceUnit,
         'weight': weight,
+        'grossWeight': grossWeight,
+        'netWeight': netWeight,
+        'pieces': pieces,
+        'size': size,
+        'shortDescription': shortDescription,
         'imageUrl': imageUrl,
         'inStock': inStock,
         'isFeatured': isFeatured,
@@ -64,6 +79,11 @@ class SeaProduct {
       price: (json['price'] as num?)?.toDouble() ?? 0,
       priceUnit: json['priceUnit']?.toString() ?? 'Kg',
       weight: json['weight']?.toString() ?? '500 gm',
+      grossWeight: json['grossWeight']?.toString() ?? '',
+      netWeight: json['netWeight']?.toString() ?? '',
+      pieces: json['pieces']?.toString() ?? '',
+      size: json['size']?.toString() ?? '',
+      shortDescription: json['shortDescription']?.toString() ?? '',
       imageUrl: json['imageUrl']?.toString() ?? '',
       inStock: json['inStock'] != false,
       isFeatured: json['isFeatured'] == true,

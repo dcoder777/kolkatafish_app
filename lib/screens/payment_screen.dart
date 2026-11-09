@@ -179,11 +179,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final address = '${widget.address1}, ${widget.city} - ${widget.pincode}';
     final (firstName, lastName) = _nameParts;
 
-    // Delivery date/slot are passed to the store as a structured note —
-    // the only channel the standard Store API offers without custom code.
     final noteBuffer = StringBuffer()
       ..writeln('Delivery Date: ${widget.deliveryDate}')
-      ..writeln('Delivery Slot: ${widget.deliverySlot}');
+      ..writeln('Delivery Slot: ${widget.deliverySlot}')
+      ..writeln('add_delivery_date: ${widget.deliveryDate}')
+      ..writeln('add_delivery_time: ${widget.deliverySlot}');
     if (widget.altPhone.trim().isNotEmpty) {
       noteBuffer.writeln('Alternative Phone: ${widget.altPhone.trim()}');
     }
@@ -204,6 +204,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         phone: widget.phone,
         paymentMethod: _selectedPayment,
         customerNote: noteBuffer.toString(),
+        deliveryDate: widget.deliveryDate,
+        deliverySlot: widget.deliverySlot,
       );
     } catch (e) {
       syncError = e is StoreApiException ? e.message : 'Could not reach the store';
@@ -221,6 +223,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
       return;
     }
+
+    // Keep user permanently logged in once order is placed
+    final auth = context.read<AuthProvider>();
+    auth.login(widget.customerName, _billingEmail, phone: widget.phone);
 
     final isOnline = _selectedPayment != 'cod';
     final order = cart.recordOrder(
@@ -521,9 +527,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
         title: Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey)),
+        // ignore: deprecated_member_use
         trailing: Radio<String>(
           value: value,
+          // ignore: deprecated_member_use
           groupValue: _selectedPayment,
+          // ignore: deprecated_member_use
           onChanged: (v) => setState(() => _selectedPayment = v!),
           activeColor: const Color(0xFFF55D2C),
         ),

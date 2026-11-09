@@ -85,9 +85,6 @@ class _SearchScreenState extends State<SearchScreen> {
       'Catla',
       'Chingri',
       'Ilish',
-      'Chicken',
-      'Mutton',
-      'Prawns',
       'Bhetki',
     ];
 

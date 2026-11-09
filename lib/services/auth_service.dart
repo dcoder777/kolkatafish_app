@@ -203,9 +203,47 @@ class AuthService {
         return AuthResult.successResult(user, msg);
       }
 
-      return AuthResult.failureResult(msg);
-    } on _AuthServiceException catch (e) {
-      return AuthResult.failureResult(e.message);
+      // If custom endpoint returned failure, also try WordPress core login fallback
+      return await _fallbackWpLogin(cleanEmail, cleanPass, fallbackMsg: msg);
+    } catch (_) {
+      return await _fallbackWpLogin(cleanEmail, cleanPass);
+    }
+  }
+
+  Future<AuthResult> _fallbackWpLogin(
+    String usernameOrEmail,
+    String password, {
+    String? fallbackMsg,
+  }) async {
+    try {
+      final res = await _postForm(wpLoginUrl, {
+        'log': usernameOrEmail,
+        'pwd': password,
+        'rememberme': 'forever',
+        'wp-submit': 'Log In',
+      }).timeout(const Duration(seconds: 25));
+
+      final hasAuthCookie = res.setCookies.any((c) =>
+          c.startsWith('wordpress_logged_in_') || c.startsWith('wordpress_sec_'));
+
+      if (hasAuthCookie || res.statusCode == 302) {
+        final displayName = nameFromEmail(usernameOrEmail);
+        final user = AuthUser(
+          name: displayName,
+          email: usernameOrEmail.contains('@') ? usernameOrEmail : '$usernameOrEmail@kolkatafish.com',
+          phone: '',
+        );
+        return AuthResult.successResult(user, 'Login successful');
+      }
+
+      final errorMsg = _extractWpError(res.body);
+      return AuthResult.failureResult(
+        errorMsg ?? fallbackMsg ?? 'Invalid username, email or password.',
+      );
+    } catch (_) {
+      return AuthResult.failureResult(
+        fallbackMsg ?? 'Could not log in. Please check your credentials.',
+      );
     }
   }
 

@@ -111,7 +111,79 @@ class ProductDetailScreen extends StatelessWidget {
                             color: product.inStock ? Colors.green : Colors.red,
                             fontWeight: FontWeight.w500)),
                   ]),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
+
+                  // Product Details (Net Wt, Gross Wt, Pieces, etc.)
+                  Text('Product Details',
+                      style: GoogleFonts.poppins(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _specItem(
+                                icon: Icons.scale_outlined,
+                                label: 'Gross Weight',
+                                value: product.grossWeight.isNotEmpty
+                                    ? product.grossWeight
+                                    : (product.weight.isNotEmpty ? product.weight : 'Standard'),
+                                color: const Color(0xFFF55D2C),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _specItem(
+                                icon: Icons.content_cut,
+                                label: 'Net Weight (After Cut)',
+                                value: product.netWeight.isNotEmpty
+                                    ? product.netWeight
+                                    : (product.weight.isNotEmpty ? product.weight : 'Cleaned'),
+                                color: const Color(0xFF2E7D32),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (product.pieces.isNotEmpty || product.size.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              if (product.pieces.isNotEmpty)
+                                Expanded(
+                                  child: _specItem(
+                                    icon: Icons.set_meal,
+                                    label: 'No. of Pieces',
+                                    value: product.pieces,
+                                    color: const Color(0xFF1976D2),
+                                  ),
+                                ),
+                              if (product.pieces.isNotEmpty && product.size.isNotEmpty)
+                                const SizedBox(width: 10),
+                              if (product.size.isNotEmpty)
+                                Expanded(
+                                  child: _specItem(
+                                    icon: Icons.straighten,
+                                    label: 'Fish Size',
+                                    value: product.size,
+                                    color: const Color(0xFF7B1FA2),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
                   Text('Description',
                       style: GoogleFonts.poppins(
                           fontSize: 16, fontWeight: FontWeight.bold)),
@@ -248,6 +320,55 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
           ),
         ]),
+      ),
+    );
+  }
+
+  Widget _specItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -29,6 +29,25 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _navIndex = index);
   }
 
+  Widget _buildAppBarTitle() {
+    switch (_navIndex) {
+      case 1:
+        return Text('Customer Support',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18));
+      case 2:
+        return Text('Shop Products',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18));
+      case 3:
+        return Text('My Cart',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18));
+      case 4:
+        return Text('My Profile',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18));
+      default:
+        return const AppLogo();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -38,20 +57,31 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _navIndex = 0);
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: const AppLogo(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SearchScreen()),
-            ),
-          ),
-        ],
-      ),
-      body: _navIndex == 0 ? _buildHomeContent(context) : _getScreen(),
-      bottomNavigationBar: NavigationBar(
+        appBar: AppBar(
+          title: _buildAppBarTitle(),
+          centerTitle: _navIndex != 0,
+          actions: [
+            if (_navIndex == 0 || _navIndex == 2)
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SearchScreen()),
+                ),
+              ),
+          ],
+        ),
+        body: IndexedStack(
+          index: _navIndex,
+          children: [
+            _buildHomeContent(context),
+            const ContactTab(hideAppBar: true),
+            const ShopTab(),
+            const CartTab(),
+            const ProfileTab(),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,
         onDestinationSelected: _onNavTap,
         animationDuration: const Duration(milliseconds: 300),
@@ -126,21 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       ),
     );
-  }
-
-  Widget _getScreen() {
-    switch (_navIndex) {
-      case 1:
-        return const ContactTab(hideAppBar: true);
-      case 2:
-        return const ShopTab();
-      case 3:
-        return const CartTab();
-      case 4:
-        return const ProfileTab();
-      default:
-        return const SizedBox.shrink();
-    }
   }
 
   Widget _buildHomeContent(BuildContext context) {

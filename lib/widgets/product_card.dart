@@ -95,9 +95,17 @@ class ProductCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
-                  Text(product.weight,
-                      style: GoogleFonts.poppins(
-                          fontSize: 10, color: Colors.grey)),
+                  Text(
+                    product.netWeight.isNotEmpty
+                        ? 'Net: ${product.netWeight} | Gross: ${product.grossWeight.isNotEmpty ? product.grossWeight : product.weight}'
+                        : (product.grossWeight.isNotEmpty
+                            ? 'Gross: ${product.grossWeight}'
+                            : (product.weight.isNotEmpty ? product.weight : '500 gm')),
+                    style: GoogleFonts.poppins(
+                        fontSize: 10, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   if (product.rating > 0) ...[
                     const SizedBox(height: 4),
                     Row(children: [

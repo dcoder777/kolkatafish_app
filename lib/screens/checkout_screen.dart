@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
+import '../services/store_api_service.dart';
 import '../utils/toast_helper.dart';
 import 'payment_screen.dart';
 
@@ -23,6 +24,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _pincodeCtrl = TextEditingController();
+
+  final StoreApiService _storeService = StoreApiService();
+  List<String> _serverSlots = [];
 
   DateTime _selectedDate = DateTime.now();
   String? _selectedSlot;
@@ -55,7 +59,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
       if (_cityCtrl.text.isEmpty) _cityCtrl.text = 'Kolkata';
       if (_pincodeCtrl.text.isEmpty) _pincodeCtrl.text = '700063';
+      _fetchServerSlots();
     });
+  }
+
+  Future<void> _fetchServerSlots() async {
+    final dateStr = _formatDate(_selectedDate);
+    final pin = _pincodeCtrl.text.trim().isEmpty ? '700063' : _pincodeCtrl.text.trim();
+    try {
+      final slots = await _storeService.fetchDeliverySlots(date: dateStr, pincode: pin);
+      if (mounted && slots.isNotEmpty) {
+        setState(() {
+          _serverSlots = slots;
+          if (_selectedSlot == null || !_serverSlots.contains(_selectedSlot)) {
+            _selectedSlot = _serverSlots.first;
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  List<String> _getEffectiveSlots() {
+    if (_serverSlots.isNotEmpty) return _serverSlots;
+    return _getAvailableSlots(_selectedDate);
   }
 
   @override
@@ -67,6 +93,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _addressCtrl.dispose();
     _cityCtrl.dispose();
     _pincodeCtrl.dispose();
+    _storeService.dispose();
     super.dispose();
   }
 
@@ -132,13 +159,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        final available = _getAvailableSlots(picked);
-        if (_selectedSlot == null || !available.contains(_selectedSlot)) {
-          _selectedSlot = available.isNotEmpty ? available.first : null;
-        }
-      });
+      setState(() => _selectedDate = picked);
+      await _fetchServerSlots();
     }
   }
 
@@ -158,7 +180,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    final slots = _getAvailableSlots(_selectedDate);
+    final slots = _getEffectiveSlots();
     if (slots.isEmpty) {
       showErrorToast(context,
           'No delivery slots available for today. Please select tomorrow.');
@@ -192,7 +214,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final subtotal = cart.cartTotal;
-    final availableSlots = _getAvailableSlots(_selectedDate);
+    final availableSlots = _getEffectiveSlots();
 
     // Auto-select first slot if none selected or invalid
     if (_selectedSlot == null && availableSlots.isNotEmpty) {
@@ -508,9 +530,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 8),
               Divider(indent: 16, endIndent: 16, color: Colors.grey.shade300),
               _priceRow('Subtotal', '₹${subtotal.toStringAsFixed(0)}'),
+              if (cart.hasCoupon)
+                _priceRow(
+                  'Coupon Discount (${cart.appliedCoupon.toUpperCase()})',
+                  '-₹${cart.couponDiscount.toStringAsFixed(0)}',
+                  color: Colors.green.shade700,
+                ),
               _priceRow('Delivery & handling', 'Calculated at payment'),
               Divider(indent: 16, endIndent: 16, color: Colors.grey.shade300),
-              _priceRow('Subtotal payable', '₹${subtotal.toStringAsFixed(0)}',
+              _priceRow('Subtotal payable',
+                  '₹${cart.cartTotalAfterDiscount.toStringAsFixed(0)}',
                   bold: true),
               Padding(
                 padding:
@@ -596,7 +625,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _priceRow(String label, String value, {bool bold = false}) {
+  Widget _priceRow(String label, String value,
+      {bool bold = false, Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -605,12 +635,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Text(label,
               style: GoogleFonts.poppins(
                   fontSize: 14,
-                  fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+                  fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+                  color: color)),
           Text(value,
               style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-                  color: bold ? const Color(0xFFF55D2C) : null)),
+                  color: color ?? (bold ? const Color(0xFFF55D2C) : null))),
         ],
       ),
     );

@@ -118,17 +118,30 @@ class StoreApiService {
         : '';
 
     final htmlPrice = _stripHtml(json['price_html']?.toString() ?? '');
+    final rawDesc = json['description']?.toString() ?? '';
+    final rawShortDesc = json['short_description']?.toString() ?? '';
+    final fullHtmlText = '$rawShortDesc $rawDesc';
+    final name = _decodeEntities(json['name']?.toString() ?? '');
+    final fallbackWeight = _weight(json);
+
+    final grossWeight = _extractGrossWeight(fullHtmlText, name, fallbackWeight);
+    final netWeight = _extractNetWeight(fullHtmlText);
+    final pieces = _extractPieces(fullHtmlText);
+    final size = _extractSize(fullHtmlText);
 
     return SeaProduct(
       id: json['id'].toString(),
-      name: _decodeEntities(json['name']?.toString() ?? ''),
-      description: _stripHtml(json['description']?.toString() ??
-          json['short_description']?.toString() ??
-          ''),
+      name: name,
+      description: _stripHtml(rawDesc.isNotEmpty ? rawDesc : rawShortDesc),
+      shortDescription: _stripHtml(rawShortDesc),
       category: category,
       price: price,
       priceUnit: _unitFrom(htmlPrice),
-      weight: _weight(json),
+      weight: fallbackWeight.isNotEmpty ? fallbackWeight : (grossWeight.isNotEmpty ? grossWeight : '500 gm'),
+      grossWeight: grossWeight,
+      netWeight: netWeight,
+      pieces: pieces,
+      size: size,
       imageUrl: imageUrl,
       inStock: json['is_in_stock'] == true,
       isFeatured: json['featured'] == true,
@@ -136,6 +149,47 @@ class StoreApiService {
       isSale: (json['on_sale'] == true) || (sale > 0 && sale < regular),
       rating: double.tryParse(json['average_rating']?.toString() ?? '') ?? 0,
     );
+  }
+
+  String _extractGrossWeight(String text, String name, String fallbackWeight) {
+    final m1 = RegExp(r'(?:Gross\s*Weight|Gross\s*Wt|Size\s*of\s*the\s*fish)\s*[:\u2013-]\s*([^<\n\r]+)', caseSensitive: false).firstMatch(text);
+    if (m1 != null) {
+      final val = _stripHtml(m1.group(1)!).trim();
+      if (val.isNotEmpty && val.length < 40) return val;
+    }
+    final m2 = RegExp(r'\(([^)]*(?:kg|gm|gms|g)[^)]*)\)', caseSensitive: false).firstMatch(name);
+    if (m2 != null) {
+      final val = m2.group(1)!.trim();
+      if (val.isNotEmpty && val.length < 40) return val;
+    }
+    return fallbackWeight;
+  }
+
+  String _extractNetWeight(String text) {
+    final m = RegExp(r'(?:After\s*Cut|Net\s*Weight|Net\s*Wt)\s*[:\u2013-]\s*([^<\n\r]+)', caseSensitive: false).firstMatch(text);
+    if (m != null) {
+      final val = _stripHtml(m.group(1)!).trim();
+      if (val.isNotEmpty && val.length < 40) return val;
+    }
+    return '';
+  }
+
+  String _extractPieces(String text) {
+    final m = RegExp(r'(?:No\.?\s*of\s*(?:Pieces|Fish|Pcs))\s*[:\u2013-]\s*([^<\n\r]+)', caseSensitive: false).firstMatch(text);
+    if (m != null) {
+      final val = _stripHtml(m.group(1)!).trim();
+      if (val.isNotEmpty && val.length < 50) return val;
+    }
+    return '';
+  }
+
+  String _extractSize(String text) {
+    final m = RegExp(r'(?:Size\s*of\s*the\s*Fish)\s*[:\u2013-]\s*([^<\n\r]+)', caseSensitive: false).firstMatch(text);
+    if (m != null) {
+      final val = _stripHtml(m.group(1)!).trim();
+      if (val.isNotEmpty && val.length < 40) return val;
+    }
+    return '';
   }
 
   double _toRupees(dynamic value, int minorUnit) {
@@ -259,7 +313,7 @@ class StoreApiService {
     }
   }
 
-  /// Place the order on the WooCommerce store (currently COD only).
+  /// Place the order on the WooCommerce store.
   Future<StoreCheckoutResult> checkout({
     required StoreCartSession session,
     required String firstName,
@@ -273,6 +327,8 @@ class StoreApiService {
     required String phone,
     String paymentMethod = 'cod',
     String customerNote = '',
+    String deliveryDate = '',
+    String deliverySlot = '',
   }) async {
     final address = {
       'first_name': firstName,
@@ -288,11 +344,36 @@ class StoreApiService {
       'email': email,
     };
 
-    final payload = {
+    final payload = <String, dynamic>{
       'billing_address': address,
       'shipping_address': {...address}..remove('email'),
       'payment_method': paymentMethod,
       if (customerNote.trim().isNotEmpty) 'customer_note': customerNote.trim(),
+      if (deliveryDate.isNotEmpty) ...{
+        'add_delivery_date': deliveryDate,
+        'delivery_date': deliveryDate,
+      },
+      if (deliverySlot.isNotEmpty) ...{
+        'add_delivery_time': deliverySlot,
+        'delivery_time': deliverySlot,
+        'delivery_slot': deliverySlot,
+      },
+      if (deliveryDate.isNotEmpty || deliverySlot.isNotEmpty)
+        'additional_fields': {
+          if (deliveryDate.isNotEmpty) 'add_delivery_date': deliveryDate,
+          if (deliverySlot.isNotEmpty) 'add_delivery_time': deliverySlot,
+        },
+      if (deliveryDate.isNotEmpty || deliverySlot.isNotEmpty)
+        'extensions': {
+          'kolkatafish_shop_customizer': {
+            if (deliveryDate.isNotEmpty) 'add_delivery_date': deliveryDate,
+            if (deliverySlot.isNotEmpty) 'add_delivery_time': deliverySlot,
+          },
+          'kolkatafish-sc': {
+            if (deliveryDate.isNotEmpty) 'add_delivery_date': deliveryDate,
+            if (deliverySlot.isNotEmpty) 'add_delivery_time': deliverySlot,
+          },
+        },
     };
 
     final res = await _client
@@ -332,6 +413,7 @@ class StoreApiService {
       redirectUrl: paymentResult['redirect_url']?.toString() ?? '',
     );
   }
+
   /// Update the cart's customer address and return the server-computed
   /// totals for that destination (items + fees + shipping).
   ///
@@ -389,6 +471,196 @@ class StoreApiService {
       throw const StoreApiException('Unexpected response while calculating delivery');
     }
 
+    return _parseCartTotals(json);
+  }
+
+  /// Apply a coupon code to the current cart session.
+  Future<StoreCartTotals> applyCoupon(
+    StoreCartSession session,
+    String code,
+  ) async {
+    final clean = code.trim().toLowerCase();
+    if (clean.isEmpty) {
+      throw const StoreApiException('Please enter a coupon code.');
+    }
+
+    final res = await _client
+        .post(
+          Uri.parse('$_base/cart/apply-coupon'),
+          headers: {
+            ..._headers,
+            'Nonce': session.nonce,
+            'Cart-Token': session.token,
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'code': clean}),
+        )
+        .timeout(const Duration(seconds: 25));
+
+    final json = jsonDecode(res.body);
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      String msg = 'Failed to apply coupon.';
+      if (json is Map && json['message'] != null) {
+        msg = _stripHtml(json['message'].toString());
+      }
+      throw StoreApiException(msg);
+    }
+
+    if (json is! Map<String, dynamic>) {
+      throw const StoreApiException('Unexpected response from coupon endpoint');
+    }
+
+    return _parseCartTotals(json);
+  }
+
+  /// Remove an applied coupon from the cart session.
+  Future<StoreCartTotals> removeCoupon(
+    StoreCartSession session,
+    String code,
+  ) async {
+    final clean = code.trim().toLowerCase();
+    final res = await _client
+        .post(
+          Uri.parse('$_base/cart/remove-coupon'),
+          headers: {
+            ..._headers,
+            'Nonce': session.nonce,
+            'Cart-Token': session.token,
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'code': clean}),
+        )
+        .timeout(const Duration(seconds: 25));
+
+    final json = jsonDecode(res.body);
+    if (res.statusCode != 200) {
+      String msg = 'Failed to remove coupon.';
+      if (json is Map && json['message'] != null) {
+        msg = _stripHtml(json['message'].toString());
+      }
+      throw StoreApiException(msg);
+    }
+
+    if (json is! Map<String, dynamic>) {
+      throw const StoreApiException('Unexpected response from coupon endpoint');
+    }
+
+    return _parseCartTotals(json);
+  }
+
+  /// Fetch available coupons from the store (Smart Coupons & public codes).
+  Future<List<StoreCoupon>> fetchAvailableCoupons([StoreCartSession? session]) async {
+    final Map<String, StoreCoupon> couponMap = {};
+
+    // Standard known active promotions on KolkataFish
+    final defaultCoupons = [
+      const StoreCoupon(
+        code: 'special10',
+        description: 'Get Flat 2% off on orders of ₹999 & above',
+        discountAmount: 2.0,
+      ),
+      const StoreCoupon(
+        code: 'fbkfcs05',
+        description: 'Get Flat 5% off on orders of ₹1499 & above',
+        discountAmount: 5.0,
+      ),
+      const StoreCoupon(
+        code: 'fbkfcs10',
+        description: 'Get Flat 10% off on orders of ₹2199 & above',
+        discountAmount: 10.0,
+      ),
+    ];
+    for (final c in defaultCoupons) {
+      couponMap[c.code.toLowerCase()] = c;
+    }
+
+    // Attempt to read live coupons published in wt_sc_blocks extension
+    try {
+      final res = await _client
+          .get(
+            Uri.parse('$_base/cart'),
+            headers: {
+              ..._headers,
+              if (session != null) ...{
+                'Nonce': session.nonce,
+                'Cart-Token': session.token,
+              },
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data is Map<String, dynamic>) {
+          final extensions = data['extensions'];
+          if (extensions is Map) {
+            final wt = extensions['wt_sc_blocks'];
+            if (wt is Map) {
+              final html = wt['coupon_blocks_checkout']?.toString() ?? '';
+              final codeMatches = RegExp(r'''data-code=["']([^"']+)["']''').allMatches(html);
+              for (final m in codeMatches) {
+                final code = m.group(1)?.trim();
+                if (code != null && code.isNotEmpty) {
+                  final descPattern = 'data-code=["\']$code["\'].*?<div[^>]*style=["\'][^"\']*color:#005345[^"\']*["\'][^>]*>(.*?)</div>';
+                  final descMatch = RegExp(descPattern, dotAll: true).firstMatch(html);
+                  final desc = descMatch != null ? _stripHtml(descMatch.group(1)!) : 'Special store coupon';
+                  couponMap[code.toLowerCase()] = StoreCoupon(
+                    code: code,
+                    description: desc,
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    return couponMap.values.toList();
+  }
+
+  /// Fetch live available delivery slots for [date] (DD/MM/YYYY) and [pincode]
+  /// directly from WooCommerce `kolkatafish_get_delivery_slots` Ajax handler.
+  Future<List<String>> fetchDeliverySlots({
+    required String date,
+    String pincode = '700063',
+  }) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('https://kolkatafish.com/wp-admin/admin-ajax.php'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) KolkataFish/1.0',
+        },
+        body: {
+          'action': 'kolkatafish_get_delivery_slots',
+          'date': date,
+          'pincode': pincode.trim().isEmpty ? '700063' : pincode.trim(),
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data is Map && data['success'] == true && data['data'] is Map) {
+          final slots = data['data']['slots'];
+          if (slots is List) {
+            final activeSlots = <String>[];
+            for (final s in slots) {
+              if (s is Map && s['disabled'] != true) {
+                final val = s['value']?.toString() ?? s['label']?.toString() ?? '';
+                if (val.isNotEmpty) activeSlots.add(val);
+              }
+            }
+            if (activeSlots.isNotEmpty) return activeSlots;
+          }
+        }
+      }
+    } catch (_) {}
+
+    return const [];
+  }
+
+  StoreCartTotals _parseCartTotals(Map<String, dynamic> json) {
     final totalsMap = json['totals'] is Map<String, dynamic>
         ? json['totals'] as Map<String, dynamic>
         : const <String, dynamic>{};
@@ -407,7 +679,6 @@ class StoreApiService {
 
     var shipping = _toRupees(totalsMap['total_shipping'], minorUnit);
     if (shipping <= 0) {
-      // Fall back to the selected shipping rate if the total is not set.
       final rates = json['shipping_rates'] is List
           ? json['shipping_rates'] as List
           : const [];
@@ -423,11 +694,20 @@ class StoreApiService {
       }
     }
 
+    final discount = _toRupees(totalsMap['total_discount'], minorUnit);
+
+    final appliedCoupons = <String>[
+      for (final c in (json['coupons'] is List ? json['coupons'] as List : const []))
+        if (c is Map && c['code'] != null) c['code'].toString(),
+    ];
+
     return StoreCartTotals(
       totalItems: _toRupees(totalsMap['total_items'], minorUnit),
       fees: fees,
       shipping: shipping,
+      discount: discount,
       totalPrice: _toRupees(totalsMap['total_price'], minorUnit),
+      appliedCoupons: appliedCoupons,
     );
   }
 
@@ -477,13 +757,32 @@ class StoreCartTotals {
   final double totalItems;
   final List<StoreFee> fees;
   final double shipping;
+  final double discount;
   final double totalPrice;
+  final List<String> appliedCoupons;
 
   const StoreCartTotals({
     required this.totalItems,
     required this.fees,
     required this.shipping,
+    this.discount = 0.0,
     required this.totalPrice,
+    this.appliedCoupons = const [],
+  });
+}
+
+/// A discount coupon from WooCommerce.
+class StoreCoupon {
+  final String code;
+  final String description;
+  final double discountAmount;
+  final bool isApplied;
+
+  const StoreCoupon({
+    required this.code,
+    this.description = '',
+    this.discountAmount = 0.0,
+    this.isApplied = false,
   });
 }
 
