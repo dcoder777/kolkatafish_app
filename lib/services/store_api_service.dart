@@ -352,11 +352,13 @@ class StoreApiService {
       if (deliveryDate.isNotEmpty) ...{
         'add_delivery_date': deliveryDate,
         'delivery_date': deliveryDate,
+        '_delivery_date': deliveryDate,
       },
       if (deliverySlot.isNotEmpty) ...{
         'add_delivery_time': deliverySlot,
         'delivery_time': deliverySlot,
         'delivery_slot': deliverySlot,
+        '_delivery_time': deliverySlot,
       },
       if (deliveryDate.isNotEmpty || deliverySlot.isNotEmpty)
         'additional_fields': {
@@ -413,6 +415,48 @@ class StoreApiService {
       redirectUrl: paymentResult['redirect_url']?.toString() ?? '',
     );
   }
+
+  /// Explicitly persist delivery date and time slot into the WooCommerce order
+  /// metadata (_delivery_date, _delivery_time, add_delivery_date, add_delivery_time).
+  Future<bool> setOrderDelivery({
+    required int orderId,
+    required String orderKey,
+    required String deliveryDate,
+    required String deliverySlot,
+  }) async {
+    if (orderId <= 0) return false;
+    final endpoints = [
+      'https://kolkatafish.com/wp-json/kolkatafish/v1/set-order-delivery',
+      'https://kolkatafish.com/wp-json/kolkatafish-sc/v1/set-order-delivery',
+    ];
+
+    final body = jsonEncode({
+      'order_id': orderId,
+      'order_key': orderKey,
+      'delivery_date': deliveryDate,
+      'delivery_slot': deliverySlot,
+    });
+
+    for (final url in endpoints) {
+      try {
+        final res = await _client
+            .post(
+              Uri.parse(url),
+              headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'KolkataFish/1.0',
+              },
+              body: body,
+            )
+            .timeout(const Duration(seconds: 10));
+        if (res.statusCode == 200) {
+          return true;
+        }
+      } catch (_) {}
+    }
+    return false;
+  }
+
 
   /// Update the cart's customer address and return the server-computed
   /// totals for that destination (items + fees + shipping).

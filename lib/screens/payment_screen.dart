@@ -207,6 +207,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
         deliveryDate: widget.deliveryDate,
         deliverySlot: widget.deliverySlot,
       );
+
+      // Immediately sync slot data directly into WooCommerce order meta
+      if (result.orderId > 0 &&
+          (widget.deliveryDate.isNotEmpty || widget.deliverySlot.isNotEmpty)) {
+        await _service.setOrderDelivery(
+          orderId: result.orderId,
+          orderKey: result.orderKey,
+          deliveryDate: widget.deliveryDate,
+          deliverySlot: widget.deliverySlot,
+        );
+      }
     } catch (e) {
       syncError = e is StoreApiException ? e.message : 'Could not reach the store';
     }

@@ -13,13 +13,14 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -27,9 +28,16 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.easeIn,
     );
 
+    _scaleAnimation = Tween<double>(begin: 0.96, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 2800), () {
+    Future.delayed(const Duration(milliseconds: 2600), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -55,35 +63,22 @@ class _SplashScreenState extends State<SplashScreen>
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Color(0xFF232C2B),
+        systemNavigationBarColor: Color(0xFF8F1117),
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFF232C2B),
         body: FadeTransition(
           opacity: _fadeAnimation,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: SizedBox.expand(
+              child: Image.asset(
                 'assets/images/splash_screen.jpg',
                 fit: BoxFit.cover,
                 alignment: Alignment.center,
               ),
-              Align(
-                alignment: const Alignment(0, 0.05),
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.4,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.85),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
